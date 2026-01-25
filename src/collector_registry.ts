@@ -18,7 +18,6 @@ export default class MetricRegistry {
 
   public counter(name: string, labels?: Record<string, string>): Counter {
     const key = Metric.hashKey(name, labels);
-    console.log(this.metrics);
 
     if (!this.metrics.has(key)) {
       const counter = new Counter(name, labels);
