@@ -1,6 +1,6 @@
 export type Labels = Readonly<Record<string, string>>;
 
-export default class Metric {
+export default abstract class Metric {
   constructor(readonly name: string, readonly labels?: Labels) {}
 
   public getHashKey(): string {
@@ -13,4 +13,6 @@ export default class Metric {
     }
     return `${name}|${JSON.stringify(labels)}`;
   }
+
+  public abstract collect(): string;
 }

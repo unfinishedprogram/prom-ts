@@ -7,7 +7,7 @@ type BenchConfig = {
 
 const CONFIG = {
   batchSize: 1000,
-  iterations: 1000,
+  iterations: 100,
 } satisfies BenchConfig;
 
 type BenchResult = {
@@ -95,6 +95,28 @@ const runBenchmarks = () => {
       },
       (counter) => {
         counter.inc();
+      },
+    ),
+
+    "collect_metrics": bench(
+      () => {
+        const registry = new MetricRegistry();
+        const counter1 = registry.counter("requests_total", {
+          method: "GET",
+          status: "200",
+        });
+        const counter2 = registry.counter("requests_total", {
+          method: "POST",
+          status: "201",
+        });
+        for (let i = 0; i < 100; i++) {
+          counter1.inc();
+          counter2.inc(2);
+        }
+        return registry;
+      },
+      (registry) => {
+        registry.collect();
       },
     ),
   };

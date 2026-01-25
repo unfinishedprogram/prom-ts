@@ -28,7 +28,10 @@ export default class MetricRegistry {
     }
   }
 
-  count(): number {
-    return this.metrics.size;
+  collect(): string {
+    return this.metrics.values()
+      .map((metric) => metric.collect())
+      .toArray()
+      .join("\n");
   }
 }
