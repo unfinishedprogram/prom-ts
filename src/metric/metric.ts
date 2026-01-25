@@ -1,4 +1,4 @@
-type Labels = Readonly<Record<string, string>>;
+export type Labels = Readonly<Record<string, string>>;
 
 export default class Metric {
   constructor(readonly name: string, readonly labels?: Labels) {}
@@ -11,9 +11,6 @@ export default class Metric {
     if (!labels || Object.keys(labels).length === 0) {
       return name;
     }
-
-    const keys = Object.keys(labels).sort();
-    const labelParts = keys.map((key) => `${key}=${labels[key]}`);
-    return `${name}|${labelParts.join(",")}`;
+    return `${name}|${JSON.stringify(labels)}`;
   }
 }

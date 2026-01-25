@@ -1,5 +1,5 @@
 import Counter from "./metric/counter";
-import Metric from "./metric/metric";
+import Metric, { type Labels } from "./metric/metric";
 
 export default class MetricRegistry {
   constructor() {}
@@ -8,15 +8,15 @@ export default class MetricRegistry {
 
   private metrics: Map<string, Metric> = new Map();
 
-  register(collector: Metric) {
-    this.metrics.set(collector.getHashKey(), collector);
+  register(metric: Metric) {
+    this.metrics.set(metric.getHashKey(), metric);
   }
 
-  unregister(collector: Metric) {
-    this.metrics.delete(collector.getHashKey());
+  unregister(metric: Metric) {
+    this.metrics.delete(metric.getHashKey());
   }
 
-  public counter(name: string, labels?: Record<string, string>): Counter {
+  public counter(name: string, labels?: Labels): Counter {
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
