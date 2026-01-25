@@ -1,0 +1,14 @@
+{
+  "name": "prom-ts",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "bench": "bun run benchmark/bench.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
