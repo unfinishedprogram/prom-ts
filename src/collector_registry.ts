@@ -1,4 +1,5 @@
 import Counter from "./metric/counter";
+import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 
 export default class MetricRegistry {
@@ -25,6 +26,18 @@ export default class MetricRegistry {
       return counter;
     } else {
       return this.metrics.get(key) as Counter;
+    }
+  }
+
+  public histogram(name: string, labels?: Labels) {
+    const key = Metric.hashKey(name, labels);
+
+    if (!this.metrics.has(key)) {
+      const histogram = new Histogram(name, labels);
+      this.register(histogram);
+      return histogram;
+    } else {
+      return this.metrics.get(key) as Histogram;
     }
   }
 

@@ -119,6 +119,19 @@ const runBenchmarks = () => {
         registry.collect();
       },
     ),
+    "histogram observe": bench(
+      () => {
+        const registry = new MetricRegistry();
+        const histogram = registry.histogram("request_duration_seconds", {
+          method: "GET",
+          status: "200",
+        });
+        return histogram;
+      },
+      (histogram) => {
+        histogram.observe(Math.random() * 10);
+      },
+    ),
   };
 };
 
