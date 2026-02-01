@@ -5,6 +5,7 @@ import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 import { defaultFormatter, type MetricFormatter } from "./format";
 import type Collector from "./collector";
+import { Aggregator } from "./aggregator";
 
 export type MetricsRegistryConfig = {
   readonly defaultLabels?: Labels;
@@ -93,16 +94,16 @@ export default class MetricRegistry {
     }
   }
 
-  public collect(formatter: MetricFormatter = defaultFormatter): string {
-    const children = this.collectors
-      .map((child) => child.collect(formatter))
-      .join("");
+  public collect<T extends Aggregator>(agg: T): T {
+    for (const child of this.collectors) {
+      child.collect(agg);
+    }
 
-    const metrics = Array.from(this.metrics.values())
-      .map((metric) => metric.collect(formatter))
-      .join("");
+    for (const metric of this.metrics.values()) {
+      metric.collect(agg);
+    }
 
-    return children + metrics;
+    return agg;
   }
 
   private combinedLabels(labels?: Labels): Labels | undefined {

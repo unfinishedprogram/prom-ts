@@ -1,3 +1,4 @@
+import type { Aggregator } from "../aggregator";
 import type Collector from "../collector";
 import type { MetricFormatter } from "../format";
 
@@ -24,7 +25,7 @@ export default abstract class Metric implements Collector {
     return `${name}|${JSON.stringify(labels)}`;
   }
 
-  public abstract collect(formatter: MetricFormatter): string;
+  abstract collect<T extends Aggregator>(agg: T): T;
 
   public describe(description: string): this {
     this.#description = description;

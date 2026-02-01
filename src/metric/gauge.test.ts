@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import Gauge from "./gauge";
-import { defaultFormatter } from "../format";
+import TestAggregator from "../test/testAggregator";
 
 describe("Gauge", () => {
   test("Gauge can be set to a negative value", () => {
@@ -19,22 +19,5 @@ describe("Gauge", () => {
 
     gauge.set(42.987654);
     expect(gauge.value).toBe(42.987654);
-  });
-
-  test("Format is correct", () => {
-    const gauge = new Gauge("flag", {
-      name: "storage.cacheSizeIndexDBDataBlocks",
-      value: "0",
-      is_set: "false",
-    });
-
-    gauge.set(5);
-
-    expect(gauge.collect(defaultFormatter).split("\n").filter(Boolean)).toEqual(
-      [
-        `# TYPE flag gauge`,
-        `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 5`,
-      ],
-    );
   });
 });

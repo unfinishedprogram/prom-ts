@@ -1,5 +1,5 @@
-import type { MetricFormatter } from "./format";
+import type { Aggregator } from "./aggregator";
 
 export default interface Collector {
-  collect(formatter?: MetricFormatter): string;
+  collect<T extends Aggregator>(agg: T): T;
 }

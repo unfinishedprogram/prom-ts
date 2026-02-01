@@ -1,3 +1,4 @@
+import type { Aggregator } from "../aggregator";
 import { defaultFormatter, type MetricFormatter } from "../format";
 import Metric from "./metric";
 
@@ -98,20 +99,12 @@ export default class Histogram extends Metric {
     return this.bucketsLe.length;
   }
 
-  collect(formatter: MetricFormatter = defaultFormatter): string {
-    const bucket_name = `${this.name}_bucket`;
-    const count_name = `${this.name}_count`;
-    const sum_name = `${this.name}_sum`;
-    const min_name = `${this.name}_min`;
-    const max_name = `${this.name}_max`;
-
-    const lines = [];
-    lines.push(
-      formatter.metadata(this.name, this.metricType, this.description),
-    );
+  collect<T extends Aggregator>(agg: T): T {
+    agg.addMeta(this.name, this.metricType, this.description);
 
     let cumulativeCount = 0;
 
+    const bucket_name = `${this.name}_bucket`;
     for (let i = 0; i < this.bucketCounts.length; i++) {
       cumulativeCount += this.bucketCounts[i]!;
 
@@ -121,14 +114,14 @@ export default class Histogram extends Metric {
 
       const labels = { ...this.labels, le: leLabel };
 
-      lines.push(formatter.timeseries(bucket_name, cumulativeCount, labels));
+      agg.addSample(bucket_name, cumulativeCount, labels);
     }
 
-    lines.push(formatter.timeseries(count_name, this.count, this.labels));
-    lines.push(formatter.timeseries(sum_name, this.sum, this.labels));
-    lines.push(formatter.timeseries(min_name, this.min, this.labels));
-    lines.push(formatter.timeseries(max_name, this.max, this.labels));
+    agg.addSample(`${this.name}_count`, this.count, this.labels);
+    agg.addSample(`${this.name}_sum`, this.sum, this.labels);
+    agg.addSample(`${this.name}_min`, this.min, this.labels);
+    agg.addSample(`${this.name}_max`, this.max, this.labels);
 
-    return lines.join("");
+    return agg;
   }
 }

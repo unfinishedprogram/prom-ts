@@ -1,3 +1,4 @@
+import { Aggregator } from "../aggregator";
 import { defaultFormatter, type MetricFormatter } from "../format";
 import Metric from "./metric";
 
@@ -11,13 +12,9 @@ export default abstract class Scalar extends Metric {
     super(name, labels);
   }
 
-  collect(formatter: MetricFormatter = defaultFormatter): string {
-    const metadata = formatter.metadata(
-      this.name,
-      this.metricType,
-      this.description,
-    );
-    const timeseries = formatter.timeseries(this.name, this.value, this.labels);
-    return metadata + timeseries;
+  collect<T extends Aggregator>(agg: T): T {
+    return agg
+      .addMeta(this.name, this.metricType, this.description)
+      .addSample(this.name, this.value, this.labels);
   }
 }

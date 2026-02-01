@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import Counter from "./counter";
+import TestAggregator from "../test/testAggregator";
 
 describe("Counter", () => {
   test("Incrementing by a negative value does nothing", () => {
@@ -17,20 +18,5 @@ describe("Counter", () => {
 
     counter.inc();
     expect(counter.value).toBe(4);
-  });
-
-  test("Format is correct", () => {
-    const counter = new Counter("flag", {
-      name: "storage.cacheSizeIndexDBDataBlocks",
-      value: "0",
-      is_set: "false",
-    });
-
-    counter.inc();
-
-    expect(counter.collect().split("\n").filter(Boolean)).toEqual([
-      `# TYPE flag counter`,
-      `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 1`,
-    ]);
   });
 });

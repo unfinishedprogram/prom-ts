@@ -15,17 +15,4 @@ describe("Observer", () => {
     observedValue = 15;
     expect(observer.value).toBe(15);
   });
-
-  test("Format is correct", () => {
-    const observer = new Observer("flag", () => 7, {
-      name: "storage.cacheSizeIndexDBDataBlocks",
-      value: "0",
-      is_set: "false",
-    });
-
-    expect(observer.collect().split("\n").filter(Boolean)).toEqual([
-      `# TYPE flag gauge`,
-      `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 7`,
-    ]);
-  });
 });
