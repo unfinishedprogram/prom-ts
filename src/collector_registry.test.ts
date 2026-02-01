@@ -74,3 +74,50 @@ test("Can add descriptions to metrics", () => {
     "# HELP described_histogram This is a test histogram",
   );
 });
+
+test("Default labels are applied to metrics", () => {
+  const registry = new MetricRegistry({ defaultLabels: { env: "test" } });
+
+  const counter = registry.counter("labeled_counter");
+  counter.inc();
+  const gauge = registry.gauge("labeled_gauge");
+  gauge.set(5);
+
+  const collected = registry.collect();
+
+  expect(collected).toContain('labeled_counter{env="test"} 1');
+  expect(collected).toContain('labeled_gauge{env="test"} 5');
+});
+
+test("Metrics can override default labels", () => {
+  const registry = new MetricRegistry({ defaultLabels: { env: "test" } });
+
+  const counter = registry.counter("labeled_counter", {
+    other_label: "no_override",
+  });
+  counter.inc();
+  const gauge = registry.gauge("labeled_gauge", { env: "prod" });
+  gauge.set(5);
+
+  const collected = registry.collect();
+
+  expect(collected).toContain(
+    'labeled_counter{env="test", other_label="no_override"} 1',
+  );
+  expect(collected).toContain('labeled_gauge{env="prod"} 5');
+});
+
+test("Metrics labels are merged with default labels", () => {
+  const registry = new MetricRegistry({ defaultLabels: { env: "test" } });
+
+  const counter = registry.counter("labeled_counter", {
+    method: "GET",
+  });
+  counter.inc();
+
+  const collected = registry.collect();
+
+  expect(collected).toContain(
+    'labeled_counter{env="test", method="GET"} 1',
+  );
+});

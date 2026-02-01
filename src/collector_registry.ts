@@ -5,8 +5,16 @@ import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 import { defaultFormatter, type MetricFormatter } from "./format";
 
+export type MetricsRegistryConfig = {
+  defaultLabels?: Labels;
+};
+
 export default class MetricRegistry {
-  constructor() {}
+  private defaultLabels?: Labels;
+
+  constructor(private config: MetricsRegistryConfig = {}) {
+    this.defaultLabels = config.defaultLabels;
+  }
 
   public static readonly DEFAULT_REGISTRY = new MetricRegistry();
 
@@ -21,6 +29,7 @@ export default class MetricRegistry {
   }
 
   public counter(name: string, labels?: Labels): Counter {
+    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -33,6 +42,7 @@ export default class MetricRegistry {
   }
 
   public histogram(name: string, labels?: Labels) {
+    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -45,6 +55,7 @@ export default class MetricRegistry {
   }
 
   public gauge(name: string, labels?: Labels) {
+    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -57,6 +68,7 @@ export default class MetricRegistry {
   }
 
   public observer(name: string, observeFn: () => number, labels?: Labels) {
+    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -73,5 +85,15 @@ export default class MetricRegistry {
       .map((metric) => metric.collect(formatter))
       .toArray()
       .join("");
+  }
+
+  private combinedLabels(labels?: Labels): Labels | undefined {
+    if (!labels) {
+      return this.defaultLabels;
+    } else if (this.defaultLabels) {
+      return { ...this.defaultLabels, ...labels };
+    } else {
+      return labels;
+    }
   }
 }
