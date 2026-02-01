@@ -1,10 +1,10 @@
-import { formatTimeSeries } from "../timeseries";
+import { defaultFormatter, type TimeseriesFormatter } from "../format";
 import Metric from "./metric";
 
 export default abstract class Scalar extends Metric {
   public abstract readonly value: number;
 
-  collect(): string {
-    return formatTimeSeries(this.name, this.value, this.labels);
+  collect(formatter: TimeseriesFormatter = defaultFormatter): string {
+    return formatter(this.name, this.value, this.labels);
   }
 }

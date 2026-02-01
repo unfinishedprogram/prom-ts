@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import Gauge from "./gauge";
+import { defaultFormatter } from "../format";
 
 describe("Gauge", () => {
   test("Gauge can be set to a negative value", () => {
@@ -29,7 +30,7 @@ describe("Gauge", () => {
 
     gauge.set(5);
 
-    expect(gauge.collect()).toEqual(
+    expect(gauge.collect(defaultFormatter)).toEqual(
       `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 5`,
     );
   });

@@ -1,3 +1,5 @@
+import type { TimeseriesFormatter } from "../format";
+
 export type Labels = Readonly<Record<string, string>>;
 
 export default abstract class Metric {
@@ -14,5 +16,5 @@ export default abstract class Metric {
     return `${name}|${JSON.stringify(labels)}`;
   }
 
-  public abstract collect(): string;
+  public abstract collect(formatter: TimeseriesFormatter): string;
 }

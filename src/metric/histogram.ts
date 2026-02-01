@@ -1,4 +1,4 @@
-import { formatTimeSeries } from "../timeseries";
+import { defaultFormatter, type TimeseriesFormatter } from "../format";
 import Metric from "./metric";
 
 export default class Histogram extends Metric {
@@ -90,7 +90,7 @@ export default class Histogram extends Metric {
     return this.bucketsLe.length;
   }
 
-  collect(): string {
+  collect(formatter: TimeseriesFormatter = defaultFormatter): string {
     const bucket_name = `${this.name}_bucket`;
     const count_name = `${this.name}_count`;
     const sum_name = `${this.name}_sum`;
@@ -108,11 +108,11 @@ export default class Histogram extends Metric {
 
       const labels = { ...this.labels, le: leLabel };
 
-      lines.push(formatTimeSeries(bucket_name, cumulativeCount, labels));
+      lines.push(formatter(bucket_name, cumulativeCount, labels));
     }
 
-    lines.push(formatTimeSeries(count_name, this.count, this.labels));
-    lines.push(formatTimeSeries(sum_name, this.sum, this.labels));
+    lines.push(formatter(count_name, this.count, this.labels));
+    lines.push(formatter(sum_name, this.sum, this.labels));
 
     return lines.join("\n");
   }

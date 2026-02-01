@@ -3,6 +3,7 @@ import Gauge from "./metric/gauge";
 import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
+import { defaultFormatter, type TimeseriesFormatter } from "./format";
 
 export default class MetricRegistry {
   constructor() {}
@@ -67,9 +68,9 @@ export default class MetricRegistry {
     }
   }
 
-  collect(): string {
+  collect(formatter: TimeseriesFormatter = defaultFormatter): string {
     return this.metrics.values()
-      .map((metric) => metric.collect())
+      .map((metric) => metric.collect(formatter))
       .toArray()
       .join("\n");
   }
