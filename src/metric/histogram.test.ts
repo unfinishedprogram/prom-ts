@@ -65,7 +65,7 @@ describe("Histogram", () => {
       expect(lines[2]).toBe('test_histogram_bucket{le="0.01"} 2');
 
       // +Inf bucket should have all 4
-      expect(lines[lines.length - 3]).toBe(
+      expect(lines[lines.length - 5]).toBe(
         'test_histogram_bucket{le="+Inf"} 4',
       );
     });
@@ -215,9 +215,9 @@ describe("Histogram", () => {
       const lines = output.split("\n").filter(Boolean);
 
       // Should have bucket lines + count + sum
-      expect(lines.length).toBe(15); // 12 buckets + count + sum + header
-      expect(lines[lines.length - 2]).toBe("http_request_duration_count 2");
-      expect(lines[lines.length - 1]).toBe("http_request_duration_sum 0.6");
+      expect(lines.length).toBe(17); // 12 buckets + count + sum + min + max + header
+      expect(lines[lines.length - 4]).toBe("http_request_duration_count 2");
+      expect(lines[lines.length - 3]).toBe("http_request_duration_sum 0.6");
     });
 
     test("Formats output correctly with labels", () => {
@@ -278,7 +278,7 @@ describe("Histogram", () => {
 
       // All buckets should be 0
       const lines = output.split("\n").filter(Boolean);
-      for (let i = 0; i < lines.length - 2; i++) {
+      for (let i = 0; i < lines.length - 4; i++) {
         expect(lines[i + 1]).toContain(" 0");
       }
     });
@@ -336,6 +336,43 @@ describe("Histogram", () => {
 
       // Value 3 should be in bucket le="3" (cumulative: 3)
       expect(lines[3]).toBe('test_histogram_bucket{le="3"} 3');
+    });
+  });
+
+  describe("Min and Max tracking", () => {
+    test("Tracks min and max correctly", () => {
+      const histogram = new Histogram("test_histogram");
+      histogram.observe(5);
+      histogram.observe(1);
+      histogram.observe(10);
+      histogram.observe(3);
+
+      const output = histogram.collect();
+      const lines = output.split("\n").filter(Boolean);
+
+      expect(lines[lines.length - 2]).toBe("test_histogram_min 1");
+      expect(lines[lines.length - 1]).toBe("test_histogram_max 10");
+    });
+
+    test("Handles single observation for min and max", () => {
+      const histogram = new Histogram("test_histogram");
+      histogram.observe(7);
+
+      const output = histogram.collect();
+      const lines = output.split("\n").filter(Boolean);
+
+      expect(lines[lines.length - 2]).toBe("test_histogram_min 7");
+      expect(lines[lines.length - 1]).toBe("test_histogram_max 7");
+    });
+
+    test("Handles no observations for min and max", () => {
+      const histogram = new Histogram("test_histogram");
+
+      const output = histogram.collect();
+      const lines = output.split("\n").filter(Boolean);
+
+      expect(lines[lines.length - 2]).toBe("test_histogram_min NaN");
+      expect(lines[lines.length - 1]).toBe("test_histogram_max NaN");
     });
   });
 });

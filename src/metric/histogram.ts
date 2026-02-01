@@ -9,6 +9,8 @@ export default class Histogram extends Metric {
 
   private count = 0;
   private sum = 0;
+  private min = NaN;
+  private max = NaN;
 
   override metricType = "histogram" as const;
   constructor(
@@ -81,6 +83,8 @@ export default class Histogram extends Metric {
 
     this.bucketCounts[bucketIndex]! += 1;
     this.count += 1;
+    this.min = Number.isNaN(this.min) ? value : Math.min(this.min, value);
+    this.max = Number.isNaN(this.max) ? value : Math.max(this.max, value);
     this.sum += value;
   }
 
@@ -98,6 +102,8 @@ export default class Histogram extends Metric {
     const bucket_name = `${this.name}_bucket`;
     const count_name = `${this.name}_count`;
     const sum_name = `${this.name}_sum`;
+    const min_name = `${this.name}_min`;
+    const max_name = `${this.name}_max`;
 
     const lines = [];
     lines.push(
@@ -120,6 +126,8 @@ export default class Histogram extends Metric {
 
     lines.push(formatter.timeseries(count_name, this.count, this.labels));
     lines.push(formatter.timeseries(sum_name, this.sum, this.labels));
+    lines.push(formatter.timeseries(min_name, this.min, this.labels));
+    lines.push(formatter.timeseries(max_name, this.max, this.labels));
 
     return lines.join("");
   }
