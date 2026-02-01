@@ -4,18 +4,19 @@ import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 import { defaultFormatter, type MetricFormatter } from "./format";
+import type Collector from "./collector";
 
 export type MetricsRegistryConfig = {
   readonly defaultLabels?: Labels;
 };
 
 export default class MetricRegistry {
-  private children: MetricRegistry[] = [];
+  private collectors: Collector[] = [];
 
   constructor(private readonly config: MetricsRegistryConfig = {}) {}
 
-  public addChild(child: MetricRegistry) {
-    this.children.push(child);
+  public addCollector(collector: Collector) {
+    this.collectors.push(collector);
   }
 
   public withLabels(labels?: Labels): MetricRegistry {
@@ -24,7 +25,7 @@ export default class MetricRegistry {
       defaultLabels: mergeLabels(this.config.defaultLabels, labels),
     };
     const registry = new MetricRegistry(config);
-    this.children.push(registry);
+    this.collectors.push(registry);
     return registry;
   }
 
@@ -93,7 +94,7 @@ export default class MetricRegistry {
   }
 
   public collect(formatter: MetricFormatter = defaultFormatter): string {
-    const children = this.children
+    const children = this.collectors
       .map((child) => child.collect(formatter))
       .join("");
 

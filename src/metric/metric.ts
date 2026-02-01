@@ -1,9 +1,10 @@
+import type Collector from "../collector";
 import type { MetricFormatter } from "../format";
 
 export type Labels = Readonly<Record<string, string>>;
 export type MetricType = "counter" | "gauge" | "histogram" | "summary";
 
-export default abstract class Metric {
+export default abstract class Metric implements Collector {
   abstract readonly metricType: MetricType;
   #description?: string;
 

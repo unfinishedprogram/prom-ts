@@ -211,7 +211,7 @@ describe("MetricRegistry children", () => {
       defaultLabels: { service: "api" },
     });
 
-    parentRegistry.addChild(childRegistry);
+    parentRegistry.addCollector(childRegistry);
 
     const counter = childRegistry.counter("manually_added_child_counter");
     counter.inc(1);
