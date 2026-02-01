@@ -1,12 +1,11 @@
 import { formatTimeSeries } from "../timeseries";
 import Metric from "./metric";
 
-export default class Counter extends Metric {
+export default class Gauge extends Metric {
   private value: number = 0;
 
-  public inc(value: number = 1): void {
-    if (value < 0) return;
-    this.value += value;
+  public set(value: number): void {
+    this.value = value;
   }
 
   getValue(): number {

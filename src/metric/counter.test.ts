@@ -8,7 +8,7 @@ describe("Counter", () => {
     expect(counter.getValue()).toBe(0);
   });
 
-  test("Incrementing by a positive value works correctly", () => {
+  test("Incrementing by a positive value", () => {
     const counter = new Counter("test_counter");
     expect(counter.getValue()).toBe(0);
 
