@@ -6,14 +6,26 @@ import Metric, { type Labels } from "./metric/metric";
 import { defaultFormatter, type MetricFormatter } from "./format";
 
 export type MetricsRegistryConfig = {
-  defaultLabels?: Labels;
+  readonly defaultLabels?: Labels;
 };
 
 export default class MetricRegistry {
-  private defaultLabels?: Labels;
+  private children: MetricRegistry[] = [];
 
-  constructor(private config: MetricsRegistryConfig = {}) {
-    this.defaultLabels = config.defaultLabels;
+  constructor(private readonly config: MetricsRegistryConfig = {}) {}
+
+  public addChild(child: MetricRegistry) {
+    this.children.push(child);
+  }
+
+  public withLabels(labels?: Labels): MetricRegistry {
+    const config = {
+      ...this.config,
+      defaultLabels: mergeLabels(this.config.defaultLabels, labels),
+    };
+    const registry = new MetricRegistry(config);
+    this.children.push(registry);
+    return registry;
   }
 
   public static readonly DEFAULT_REGISTRY = new MetricRegistry();
@@ -81,19 +93,26 @@ export default class MetricRegistry {
   }
 
   public collect(formatter: MetricFormatter = defaultFormatter): string {
-    return this.metrics.values()
-      .map((metric) => metric.collect(formatter))
-      .toArray()
+    const children = this.children
+      .map((child) => child.collect(formatter))
       .join("");
+
+    const metrics = Array.from(this.metrics.values())
+      .map((metric) => metric.collect(formatter))
+      .join("");
+
+    return children + metrics;
   }
 
   private combinedLabels(labels?: Labels): Labels | undefined {
-    if (!labels) {
-      return this.defaultLabels;
-    } else if (this.defaultLabels) {
-      return { ...this.defaultLabels, ...labels };
-    } else {
-      return labels;
-    }
+    return mergeLabels(this.config.defaultLabels, labels);
+  }
+}
+
+function mergeLabels(a?: Labels, b?: Labels): Labels | undefined {
+  if (a && b) {
+    return { ...a, ...b };
+  } else {
+    return a || b;
   }
 }
