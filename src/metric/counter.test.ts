@@ -28,8 +28,9 @@ describe("Counter", () => {
 
     counter.inc();
 
-    expect(counter.collect()).toEqual(
+    expect(counter.collect().split("\n").filter(Boolean)).toEqual([
+      `# TYPE flag counter`,
       `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 1`,
-    );
+    ]);
   });
 });

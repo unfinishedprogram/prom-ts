@@ -30,8 +30,11 @@ describe("Gauge", () => {
 
     gauge.set(5);
 
-    expect(gauge.collect(defaultFormatter)).toEqual(
-      `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 5`,
+    expect(gauge.collect(defaultFormatter).split("\n").filter(Boolean)).toEqual(
+      [
+        `# TYPE flag gauge`,
+        `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 5`,
+      ],
     );
   });
 });

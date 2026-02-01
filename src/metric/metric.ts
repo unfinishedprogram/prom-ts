@@ -1,9 +1,16 @@
-import type { TimeseriesFormatter } from "../format";
+import type { MetricFormatter } from "../format";
 
 export type Labels = Readonly<Record<string, string>>;
+export type MetricType = "counter" | "gauge" | "histogram" | "summary";
 
 export default abstract class Metric {
-  constructor(readonly name: string, readonly labels?: Labels) {}
+  abstract readonly metricType: MetricType;
+
+  constructor(
+    readonly name: string,
+    readonly labels?: Labels,
+    readonly description?: string,
+  ) {}
 
   public getHashKey(): string {
     return Metric.hashKey(this.name, this.labels);
@@ -16,5 +23,5 @@ export default abstract class Metric {
     return `${name}|${JSON.stringify(labels)}`;
   }
 
-  public abstract collect(formatter: TimeseriesFormatter): string;
+  public abstract collect(formatter: MetricFormatter): string;
 }

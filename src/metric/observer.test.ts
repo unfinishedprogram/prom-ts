@@ -23,8 +23,9 @@ describe("Observer", () => {
       is_set: "false",
     });
 
-    expect(observer.collect()).toEqual(
+    expect(observer.collect().split("\n").filter(Boolean)).toEqual([
+      `# TYPE flag gauge`,
       `flag{name="storage.cacheSizeIndexDBDataBlocks", value="0", is_set="false"} 7`,
-    );
+    ]);
   });
 });

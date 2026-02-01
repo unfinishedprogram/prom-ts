@@ -55,13 +55,14 @@ describe("Histogram", () => {
       histogram.observe(15); // Above all buckets
 
       const output = histogram.collect();
-      const lines = output.split("\n");
+      const lines = output.split("\n").filter(Boolean);
 
+      expect(lines[0]).toBe("# TYPE test_histogram histogram"); // Ensure there are enough lines
       // First bucket (0.005) should have 1 (cumulative)
-      expect(lines[0]).toBe('test_histogram_bucket{le="0.005"} 1');
+      expect(lines[1]).toBe('test_histogram_bucket{le="0.005"} 1');
 
       // Second bucket (0.01) should have 2 (cumulative)
-      expect(lines[1]).toBe('test_histogram_bucket{le="0.01"} 2');
+      expect(lines[2]).toBe('test_histogram_bucket{le="0.01"} 2');
 
       // +Inf bucket should have all 4
       expect(lines[lines.length - 3]).toBe(
@@ -211,10 +212,10 @@ describe("Histogram", () => {
       histogram.observe(0.5);
 
       const output = histogram.collect();
-      const lines = output.split("\n");
+      const lines = output.split("\n").filter(Boolean);
 
       // Should have bucket lines + count + sum
-      expect(lines.length).toBe(14); // 12 buckets + count + sum
+      expect(lines.length).toBe(15); // 12 buckets + count + sum + header
       expect(lines[lines.length - 2]).toBe("http_request_duration_count 2");
       expect(lines[lines.length - 1]).toBe("http_request_duration_sum 0.6");
     });
@@ -253,18 +254,19 @@ describe("Histogram", () => {
 
       const output = histogram.collect();
       const lines = output.split("\n");
+      expect(lines[0]).toBe("# TYPE test_histogram histogram");
 
       // Bucket 1: should have 2 (0.5 and 1)
-      expect(lines[0]).toBe('test_histogram_bucket{le="1"} 2');
+      expect(lines[1]).toBe('test_histogram_bucket{le="1"} 2');
 
       // Bucket 2: should have 3 (cumulative: 0.5, 1, and 2)
-      expect(lines[1]).toBe('test_histogram_bucket{le="2"} 3');
+      expect(lines[2]).toBe('test_histogram_bucket{le="2"} 3');
 
       // Bucket 3: should have 3 (cumulative: 0.5, 1, 2)
-      expect(lines[2]).toBe('test_histogram_bucket{le="3"} 3');
+      expect(lines[3]).toBe('test_histogram_bucket{le="3"} 3');
 
       // +Inf: should have all 4
-      expect(lines[3]).toBe('test_histogram_bucket{le="+Inf"} 4');
+      expect(lines[4]).toBe('test_histogram_bucket{le="+Inf"} 4');
     });
 
     test("Empty histogram has zero counts", () => {
@@ -275,9 +277,9 @@ describe("Histogram", () => {
       expect(output).toContain("test_histogram_sum 0");
 
       // All buckets should be 0
-      const lines = output.split("\n");
+      const lines = output.split("\n").filter(Boolean);
       for (let i = 0; i < lines.length - 2; i++) {
-        expect(lines[i]).toContain(" 0");
+        expect(lines[i + 1]).toContain(" 0");
       }
     });
   });
@@ -323,14 +325,17 @@ describe("Histogram", () => {
       const output = histogram.collect();
       const lines = output.split("\n");
 
+      // Header should be valid
+      expect(lines[0]).toBe("# TYPE test_histogram histogram");
+
       // Value 1 should be in bucket le="1"
-      expect(lines[0]).toBe('test_histogram_bucket{le="1"} 1');
+      expect(lines[1]).toBe('test_histogram_bucket{le="1"} 1');
 
       // Value 2 should be in bucket le="2" (cumulative: 2)
-      expect(lines[1]).toBe('test_histogram_bucket{le="2"} 2');
+      expect(lines[2]).toBe('test_histogram_bucket{le="2"} 2');
 
       // Value 3 should be in bucket le="3" (cumulative: 3)
-      expect(lines[2]).toBe('test_histogram_bucket{le="3"} 3');
+      expect(lines[3]).toBe('test_histogram_bucket{le="3"} 3');
     });
   });
 });

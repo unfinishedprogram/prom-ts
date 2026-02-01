@@ -3,7 +3,7 @@ import Gauge from "./metric/gauge";
 import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
-import { defaultFormatter, type TimeseriesFormatter } from "./format";
+import { defaultFormatter, type MetricFormatter } from "./format";
 
 export default class MetricRegistry {
   constructor() {}
@@ -20,11 +20,11 @@ export default class MetricRegistry {
     this.metrics.delete(metric.getHashKey());
   }
 
-  public counter(name: string, labels?: Labels): Counter {
+  public counter(name: string, labels?: Labels, description?: string): Counter {
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
-      const counter = new Counter(name, labels);
+      const counter = new Counter(name, labels, description);
       this.register(counter);
       return counter;
     } else {
@@ -68,10 +68,10 @@ export default class MetricRegistry {
     }
   }
 
-  public collect(formatter: TimeseriesFormatter = defaultFormatter): string {
+  public collect(formatter: MetricFormatter = defaultFormatter): string {
     return this.metrics.values()
       .map((metric) => metric.collect(formatter))
       .toArray()
-      .join("\n");
+      .join("");
   }
 }

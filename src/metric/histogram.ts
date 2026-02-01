@@ -1,5 +1,9 @@
-import { defaultFormatter, type TimeseriesFormatter } from "../format";
-import Metric from "./metric";
+import {
+  defaultFormatter,
+  type MetricFormatter,
+  type TimeseriesFormatter,
+} from "../format";
+import Metric, { type MetricType } from "./metric";
 
 export default class Histogram extends Metric {
   static defaultBuckets = [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10];
@@ -10,12 +14,17 @@ export default class Histogram extends Metric {
   private count = 0;
   private sum = 0;
 
-  constructor(name: string, labels?: Record<string, string>) {
+  override metricType = "histogram" as const;
+  constructor(
+    name: string,
+    labels?: Record<string, string>,
+    description?: string,
+  ) {
     if (labels?.le) {
       throw new Error('Histogram label keys cannot include "le"');
     }
 
-    super(name, labels);
+    super(name, labels, description);
   }
 
   public withLinearBuckets(
@@ -90,12 +99,15 @@ export default class Histogram extends Metric {
     return this.bucketsLe.length;
   }
 
-  collect(formatter: TimeseriesFormatter = defaultFormatter): string {
+  collect(formatter: MetricFormatter = defaultFormatter): string {
     const bucket_name = `${this.name}_bucket`;
     const count_name = `${this.name}_count`;
     const sum_name = `${this.name}_sum`;
 
     const lines = [];
+    lines.push(
+      formatter.metadata(this.name, this.metricType, this.description),
+    );
 
     let cumulativeCount = 0;
 
@@ -108,12 +120,12 @@ export default class Histogram extends Metric {
 
       const labels = { ...this.labels, le: leLabel };
 
-      lines.push(formatter(bucket_name, cumulativeCount, labels));
+      lines.push(formatter.timeseries(bucket_name, cumulativeCount, labels));
     }
 
-    lines.push(formatter(count_name, this.count, this.labels));
-    lines.push(formatter(sum_name, this.sum, this.labels));
+    lines.push(formatter.timeseries(count_name, this.count, this.labels));
+    lines.push(formatter.timeseries(sum_name, this.sum, this.labels));
 
-    return lines.join("\n");
+    return lines.join("");
   }
 }
