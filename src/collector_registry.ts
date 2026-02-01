@@ -8,15 +8,15 @@ import { defaultFormatter, type TimeseriesFormatter } from "./format";
 export default class MetricRegistry {
   constructor() {}
 
-  public static DEFAULT_REGISTRY = new MetricRegistry();
+  public static readonly DEFAULT_REGISTRY = new MetricRegistry();
 
   private metrics: Map<string, Metric> = new Map();
 
-  register(metric: Metric) {
+  public register(metric: Metric) {
     this.metrics.set(metric.getHashKey(), metric);
   }
 
-  unregister(metric: Metric) {
+  public unregister(metric: Metric) {
     this.metrics.delete(metric.getHashKey());
   }
 
@@ -68,7 +68,7 @@ export default class MetricRegistry {
     }
   }
 
-  collect(formatter: TimeseriesFormatter = defaultFormatter): string {
+  public collect(formatter: TimeseriesFormatter = defaultFormatter): string {
     return this.metrics.values()
       .map((metric) => metric.collect(formatter))
       .toArray()
