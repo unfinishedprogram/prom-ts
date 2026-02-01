@@ -1,5 +1,5 @@
 import { defaultFormatter, type MetricFormatter } from "../format";
-import Metric, { type MetricType } from "./metric";
+import Metric from "./metric";
 
 export default abstract class Scalar extends Metric {
   public abstract readonly value: number;

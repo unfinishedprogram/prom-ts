@@ -1,4 +1,3 @@
-import type { MetricType } from "./metric";
 import Scalar from "./scalar";
 
 export default class Counter extends Scalar {

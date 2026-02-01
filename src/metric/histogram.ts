@@ -1,9 +1,5 @@
-import {
-  defaultFormatter,
-  type MetricFormatter,
-  type TimeseriesFormatter,
-} from "../format";
-import Metric, { type MetricType } from "./metric";
+import { defaultFormatter, type MetricFormatter } from "../format";
+import Metric from "./metric";
 
 export default class Histogram extends Metric {
   static defaultBuckets = [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10];
