@@ -1,18 +1,13 @@
-import { formatTimeSeries } from "../timeseries";
-import Metric from "./metric";
+import Scalar from "./scalar";
 
-export default class Gauge extends Metric {
-  private value: number = 0;
+export default class Gauge extends Scalar {
+  private _value: number = 0;
 
   public set(value: number): void {
-    this.value = value;
+    this._value = value;
   }
 
-  getValue(): number {
-    return this.value;
-  }
-
-  collect(): string {
-    return formatTimeSeries(this.name, this.value, this.labels);
+  get value(): number {
+    return this._value;
   }
 }

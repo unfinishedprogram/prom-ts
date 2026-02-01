@@ -1,6 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 import MetricRegistry from "./collector_registry";
-import Counter from "./metric/counter";
 
 test("The same instance is returned for the same name", () => {
   const registry = new MetricRegistry();
@@ -9,5 +8,5 @@ test("The same instance is returned for the same name", () => {
 
   registry.counter("test_counter", { "name": "bad_name" }).inc(5);
 
-  expect(counter.getValue()).toBe(5);
+  expect(counter.value).toBe(5);
 });

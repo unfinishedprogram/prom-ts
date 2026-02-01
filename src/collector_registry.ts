@@ -41,6 +41,19 @@ export default class MetricRegistry {
     }
   }
 
+  public gauge(name: string, labels?: Labels) {
+    const key = Metric.hashKey(name, labels);
+
+    if (!this.metrics.has(key)) {
+      const Gauge = require("./metric/gauge").default;
+      const gauge = new Gauge(name, labels);
+      this.register(gauge);
+      return gauge;
+    } else {
+      return this.metrics.get(key) as import("./metric/gauge").default;
+    }
+  }
+
   collect(): string {
     return this.metrics.values()
       .map((metric) => metric.collect())
