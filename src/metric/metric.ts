@@ -5,11 +5,11 @@ export type MetricType = "counter" | "gauge" | "histogram" | "summary";
 
 export default abstract class Metric {
   abstract readonly metricType: MetricType;
+  #description?: string;
 
   constructor(
     readonly name: string,
     readonly labels?: Labels,
-    readonly description?: string,
   ) {}
 
   public getHashKey(): string {
@@ -24,4 +24,13 @@ export default abstract class Metric {
   }
 
   public abstract collect(formatter: MetricFormatter): string;
+
+  public withDescription(description: string): this {
+    this.#description = description;
+    return this;
+  }
+
+  get description(): string | undefined {
+    return this.#description;
+  }
 }

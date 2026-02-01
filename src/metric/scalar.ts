@@ -7,9 +7,8 @@ export default abstract class Scalar extends Metric {
   constructor(
     name: string,
     labels?: Record<string, string>,
-    description?: string,
   ) {
-    super(name, labels, description);
+    super(name, labels);
   }
 
   collect(formatter: MetricFormatter = defaultFormatter): string {

@@ -20,11 +20,11 @@ export default class MetricRegistry {
     this.metrics.delete(metric.getHashKey());
   }
 
-  public counter(name: string, labels?: Labels, description?: string): Counter {
+  public counter(name: string, labels?: Labels): Counter {
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
-      const counter = new Counter(name, labels, description);
+      const counter = new Counter(name, labels);
       this.register(counter);
       return counter;
     } else {

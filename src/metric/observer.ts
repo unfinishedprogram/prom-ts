@@ -6,9 +6,8 @@ export default class Observer extends Scalar {
     name: string,
     private readonly observeFn: () => number,
     labels?: Readonly<Record<string, string>>,
-    description?: string,
   ) {
-    super(name, labels, description);
+    super(name, labels);
   }
 
   get value(): number {

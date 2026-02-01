@@ -14,13 +14,12 @@ export default class Histogram extends Metric {
   constructor(
     name: string,
     labels?: Record<string, string>,
-    description?: string,
   ) {
     if (labels?.le) {
       throw new Error('Histogram label keys cannot include "le"');
     }
 
-    super(name, labels, description);
+    super(name, labels);
   }
 
   public withLinearBuckets(
