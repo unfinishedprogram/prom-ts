@@ -1,4 +1,6 @@
 import Counter from "./metric/counter";
+import Gauge from "./metric/gauge";
+import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 
@@ -45,12 +47,23 @@ export default class MetricRegistry {
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
-      const Gauge = require("./metric/gauge").default;
       const gauge = new Gauge(name, labels);
       this.register(gauge);
       return gauge;
     } else {
-      return this.metrics.get(key) as import("./metric/gauge").default;
+      return this.metrics.get(key) as Gauge;
+    }
+  }
+
+  public observer(name: string, observeFn: () => number, labels?: Labels) {
+    const key = Metric.hashKey(name, labels);
+
+    if (!this.metrics.has(key)) {
+      const observer = new Observer(name, observeFn, labels);
+      this.register(observer);
+      return observer;
+    } else {
+      return this.metrics.get(key) as Observer;
     }
   }
 
