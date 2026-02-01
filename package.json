@@ -2,6 +2,10 @@
   "name": "prom-ts",
   "module": "index.ts",
   "type": "module",
+  "files": [
+    "index.ts",
+    "src/**"
+  ],
   "scripts": {
     "bench": "bun run benchmark/bench.ts"
   },
