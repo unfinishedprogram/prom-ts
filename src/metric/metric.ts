@@ -25,7 +25,7 @@ export default abstract class Metric {
 
   public abstract collect(formatter: MetricFormatter): string;
 
-  public withDescription(description: string): this {
+  public describe(description: string): this {
     this.#description = description;
     return this;
   }
