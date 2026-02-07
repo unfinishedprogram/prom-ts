@@ -1,3 +1,4 @@
+import { Aggregator } from "../src/aggregator";
 import MetricRegistry from "../src/collector_registry";
 
 type BenchConfig = {
@@ -113,10 +114,11 @@ const runBenchmarks = () => {
           counter1.inc();
           counter2.inc(2);
         }
-        return registry;
+        const aggregator = new Aggregator();
+        return [registry, aggregator] as const;
       },
-      (registry) => {
-        registry.collect();
+      ([registry, aggregator]) => {
+        registry.collect(aggregator);
       },
     ),
     "histogram observe": bench(
