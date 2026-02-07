@@ -4,7 +4,6 @@ export default class TestAggregator extends Aggregator {
   public getMetric(identifier: string) {
     return this.samples.find((s) => {
       const key = stringifySampleKey(s.name, s.labels);
-      console.log(key, identifier);
 
       return stringifySampleKey(s.name, s.labels) === identifier;
     });
