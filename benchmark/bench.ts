@@ -118,7 +118,7 @@ const runBenchmarks = () => {
         return [registry, aggregator] as const;
       },
       ([registry, aggregator]) => {
-        registry.collect(aggregator);
+        registry.aggregate(aggregator);
       },
     ),
     "histogram observe": bench(

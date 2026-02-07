@@ -8,7 +8,7 @@ export default abstract class Scalar extends Metric {
     super(name, labels);
   }
 
-  collect<T extends Aggregator>(agg: T): T {
+  aggregate<T extends Aggregator>(agg: T): T {
     return agg
       .addMeta(this.name, this.metricType, this.description)
       .addSample(this.name, this.value, this.labels);

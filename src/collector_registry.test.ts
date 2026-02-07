@@ -37,12 +37,12 @@ describe("MetricRegistry registration semantics", () => {
 
     const gauge = registry.gauge("test_gauge");
 
-    const agg = registry.collect(new TestAggregator());
+    const agg = registry.aggregate(new TestAggregator());
     expect(agg.getMetric("test_gauge")?.value).toBe(0);
 
     registry.unregister(gauge);
 
-    const aggAfterUnregister = registry.collect(new TestAggregator());
+    const aggAfterUnregister = registry.aggregate(new TestAggregator());
     expect(aggAfterUnregister.getMetric("test_gauge")).toBeUndefined();
   });
 });
@@ -63,7 +63,7 @@ describe("Metric descriptions", () => {
     registry.observer("described_observer", () => 1)
       .describe("This is a test observer");
 
-    const agg = registry.collect(new TestAggregator());
+    const agg = registry.aggregate(new TestAggregator());
 
     expect(agg.getMeta("described_counter")?.description).toBe(
       "This is a test counter",
@@ -89,7 +89,7 @@ describe("Default labels in MetricRegistry", () => {
     const gauge = registry.gauge("labeled_gauge");
     gauge.set(5);
 
-    const agg = registry.collect(new TestAggregator());
+    const agg = registry.aggregate(new TestAggregator());
 
     expect(agg.getMetric('labeled_counter{"env":"test"}')?.value).toBe(1);
     expect(agg.getMetric('labeled_gauge{"env":"test"}')?.value).toBe(5);
@@ -105,7 +105,7 @@ describe("Default labels in MetricRegistry", () => {
     const gauge = registry.gauge("labeled_gauge", { env: "prod" });
     gauge.set(5);
 
-    const agg = registry.collect(new TestAggregator());
+    const agg = registry.aggregate(new TestAggregator());
 
     expect(
       agg.getMetric('labeled_counter{"env":"test","other_label":"no_override"}')
@@ -122,7 +122,7 @@ describe("Default labels in MetricRegistry", () => {
     });
     counter.inc();
 
-    const agg = registry.collect(new TestAggregator());
+    const agg = registry.aggregate(new TestAggregator());
 
     expect(agg.getMetric('labeled_counter{"env":"test","method":"GET"}')?.value)
       .toBe(1);
@@ -137,7 +137,7 @@ describe("MetricRegistry children", () => {
     const counter = childRegistry.counter("child_counter");
     counter.inc(1);
 
-    const agg = parentRegistry.collect(new TestAggregator());
+    const agg = parentRegistry.aggregate(new TestAggregator());
     expect(agg.getMetric("child_counter")?.value).toBe(1);
   });
 
@@ -150,7 +150,7 @@ describe("MetricRegistry children", () => {
     const counter = childRegistry.counter("child_labeled_counter");
     counter.inc(1);
 
-    const agg = parentRegistry.collect(new TestAggregator());
+    const agg = parentRegistry.aggregate(new TestAggregator());
     expect(
       agg.getMetric('child_labeled_counter{"env":"test","service":"api"}')
         ?.value,
@@ -166,7 +166,7 @@ describe("MetricRegistry children", () => {
     const counter = childRegistry.counter("child_labeled_counter");
     counter.inc(1);
 
-    const agg = parentRegistry.collect(new TestAggregator());
+    const agg = parentRegistry.aggregate(new TestAggregator());
     expect(
       agg.getMetric('child_labeled_counter{"env":"test","service":"api"}')
         ?.value,
@@ -182,7 +182,7 @@ describe("MetricRegistry children", () => {
     const counter = childRegistry.counter("child_labeled_counter");
     counter.inc(1);
 
-    const agg = parentRegistry.collect(new TestAggregator());
+    const agg = parentRegistry.aggregate(new TestAggregator());
     expect(agg.getMetric('child_labeled_counter{"env":"prod"}')?.value).toBe(1);
   });
 
@@ -198,7 +198,7 @@ describe("MetricRegistry children", () => {
     const counter = registry.counter("nested_labeled_counter");
     counter.inc(1);
 
-    const agg = grandParentRegistry.collect(new TestAggregator());
+    const agg = grandParentRegistry.aggregate(new TestAggregator());
     expect(
       agg.getMetric(
         'nested_labeled_counter{"env":"test","service":"api","version":"v1","region":"us-east"}',
@@ -219,10 +219,29 @@ describe("MetricRegistry children", () => {
     const counter = childRegistry.counter("manually_added_child_counter");
     counter.inc(1);
 
-    const agg = parentRegistry.collect(new TestAggregator());
+    const agg = parentRegistry.aggregate(new TestAggregator());
 
     expect(
       agg.getMetric('manually_added_child_counter{"service":"api"}')?.value,
     ).toBe(1);
+  });
+});
+
+describe("MetricRegistry aggregation", () => {
+  test("Metrics from all collectors are aggregated", () => {
+    const registry = new MetricRegistry();
+
+    const counter = registry.counter("test_counter");
+    counter.inc(5);
+
+    const gauge = registry.gauge("test_gauge");
+    gauge.set(10);
+
+    const agg = registry.aggregate(new TestAggregator());
+
+    expect(agg.getMetric("test_counter")?.value).toBe(5);
+    expect(agg.getMetric("test_gauge")?.value).toBe(10);
+
+    expect(registry.collect()).toBeString();
   });
 });

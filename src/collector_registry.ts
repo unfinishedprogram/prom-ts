@@ -3,7 +3,6 @@ import Gauge from "./metric/gauge";
 import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
-import { defaultFormatter, type MetricFormatter } from "./format";
 import type Collector from "./collector";
 import { Aggregator } from "./aggregator";
 
@@ -11,7 +10,7 @@ export type MetricsRegistryConfig = {
   readonly defaultLabels?: Labels;
 };
 
-export default class MetricRegistry {
+export default class MetricRegistry implements Collector {
   private collectors: Collector[] = [];
 
   constructor(private readonly config: MetricsRegistryConfig = {}) {}
@@ -94,16 +93,21 @@ export default class MetricRegistry {
     }
   }
 
-  public collect<T extends Aggregator>(agg: T): T {
+  public aggregate<T extends Aggregator>(agg: T): T {
     for (const child of this.collectors) {
-      child.collect(agg);
+      child.aggregate(agg);
     }
 
     for (const metric of this.metrics.values()) {
-      metric.collect(agg);
+      metric.aggregate(agg);
     }
 
     return agg;
+  }
+
+  public collect(agg: Aggregator = new Aggregator()): string {
+    this.aggregate(agg);
+    return agg.format();
   }
 
   private combinedLabels(labels?: Labels): Labels | undefined {

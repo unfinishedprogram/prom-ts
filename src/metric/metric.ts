@@ -24,7 +24,7 @@ export default abstract class Metric implements Collector {
     return `${name}|${JSON.stringify(labels)}`;
   }
 
-  abstract collect<T extends Aggregator>(agg: T): T;
+  abstract aggregate<T extends Aggregator>(agg: T): T;
 
   public describe(description: string): this {
     this.#description = description;

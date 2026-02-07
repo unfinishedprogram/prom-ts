@@ -98,7 +98,7 @@ export default class Histogram extends Metric {
     return this.bucketsLe.length;
   }
 
-  collect<T extends Aggregator>(agg: T): T {
+  aggregate<T extends Aggregator>(agg: T): T {
     agg.addMeta(this.name, this.metricType, this.description);
 
     let cumulativeCount = 0;
