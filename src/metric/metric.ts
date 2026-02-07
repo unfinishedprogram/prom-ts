@@ -1,6 +1,5 @@
 import type { Aggregator } from "../aggregator";
 import type Collector from "../collector";
-import type { MetricFormatter } from "../format";
 
 export type Labels = Readonly<Record<string, string>>;
 export type MetricType = "counter" | "gauge" | "histogram" | "summary";

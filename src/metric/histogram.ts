@@ -1,5 +1,4 @@
 import type { Aggregator } from "../aggregator";
-import { defaultFormatter, type MetricFormatter } from "../format";
 import Metric from "./metric";
 
 export default class Histogram extends Metric {

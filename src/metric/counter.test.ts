@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import Counter from "./counter";
-import TestAggregator from "../test/testAggregator";
 
 describe("Counter", () => {
   test("Incrementing by a negative value does nothing", () => {

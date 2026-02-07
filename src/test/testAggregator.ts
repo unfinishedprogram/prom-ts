@@ -1,11 +1,14 @@
 import { Aggregator } from "../aggregator";
 
 export default class TestAggregator extends Aggregator {
+  constructor() {
+    super();
+  }
+
   public getMetric(identifier: string) {
     return this.samples.find((s) => {
       const key = stringifySampleKey(s.name, s.labels);
-
-      return stringifySampleKey(s.name, s.labels) === identifier;
+      return key === identifier;
     });
   }
 
@@ -14,10 +17,10 @@ export default class TestAggregator extends Aggregator {
   }
 }
 
-function stringifySampleKey(name: string, labels?: Record<string, string>) {
+const stringifySampleKey = (name: string, labels?: Record<string, string>) => {
   if (labels && Object.keys(labels).length > 0) {
     return `${name}${JSON.stringify(labels)}`;
   } else {
     return name;
   }
-}
+};

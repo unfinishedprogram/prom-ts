@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import Histogram from "./histogram";
-import { Aggregator } from "../aggregator";
 import TestAggregator from "../test/testAggregator";
 
 describe("Histogram", () => {

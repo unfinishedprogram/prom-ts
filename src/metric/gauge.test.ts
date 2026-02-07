@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import Gauge from "./gauge";
-import TestAggregator from "../test/testAggregator";
 
 describe("Gauge", () => {
   test("Gauge can be set to a negative value", () => {

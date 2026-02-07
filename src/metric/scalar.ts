@@ -1,14 +1,10 @@
 import { Aggregator } from "../aggregator";
-import { defaultFormatter, type MetricFormatter } from "../format";
 import Metric from "./metric";
 
 export default abstract class Scalar extends Metric {
   public abstract readonly value: number;
 
-  constructor(
-    name: string,
-    labels?: Record<string, string>,
-  ) {
+  constructor(name: string, labels?: Record<string, string>) {
     super(name, labels);
   }
 
