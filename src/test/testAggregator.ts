@@ -1,6 +1,6 @@
-import { Aggregator } from "../aggregator";
+import { DefaultAggregator } from "../aggregator";
 
-export default class TestAggregator extends Aggregator {
+export default class TestAggregator extends DefaultAggregator {
   constructor() {
     super();
   }

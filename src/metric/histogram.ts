@@ -98,7 +98,7 @@ export default class Histogram extends Metric {
     return this.bucketsLe.length;
   }
 
-  aggregate<T extends Aggregator>(agg: T): T {
+  aggregate(agg: Aggregator) {
     agg.addMeta(this.name, this.metricType, this.description);
 
     let cumulativeCount = 0;
@@ -120,7 +120,5 @@ export default class Histogram extends Metric {
     agg.addSample(`${this.name}_sum`, this.sum, this.labels);
     agg.addSample(`${this.name}_min`, this.min, this.labels);
     agg.addSample(`${this.name}_max`, this.max, this.labels);
-
-    return agg;
   }
 }

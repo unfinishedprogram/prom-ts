@@ -4,7 +4,12 @@ import Observer from "./metric/observer";
 import Histogram from "./metric/histogram";
 import Metric, { type Labels } from "./metric/metric";
 import type Collector from "./collector";
-import { Aggregator } from "./aggregator";
+import {
+  type Aggregator,
+  DefaultAggregator,
+  LabelingAggregator,
+} from "./aggregator";
+import { mergeLabels } from "./util";
 
 export type MetricsRegistryConfig = {
   readonly defaultLabels?: Labels;
@@ -42,7 +47,6 @@ export default class MetricRegistry implements Collector {
   }
 
   public counter(name: string, labels?: Labels): Counter {
-    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -55,7 +59,6 @@ export default class MetricRegistry implements Collector {
   }
 
   public histogram(name: string, labels?: Labels) {
-    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -68,7 +71,6 @@ export default class MetricRegistry implements Collector {
   }
 
   public gauge(name: string, labels?: Labels) {
-    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -81,7 +83,6 @@ export default class MetricRegistry implements Collector {
   }
 
   public observer(name: string, observeFn: () => number, labels?: Labels) {
-    labels = this.combinedLabels(labels);
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
@@ -93,7 +94,11 @@ export default class MetricRegistry implements Collector {
     }
   }
 
-  public aggregate<T extends Aggregator>(agg: T): T {
+  public aggregate(agg: Aggregator) {
+    if (this.config.defaultLabels) {
+      agg = new LabelingAggregator(agg, this.config.defaultLabels);
+    }
+
     for (const child of this.collectors) {
       child.aggregate(agg);
     }
@@ -101,24 +106,12 @@ export default class MetricRegistry implements Collector {
     for (const metric of this.metrics.values()) {
       metric.aggregate(agg);
     }
-
-    return agg;
   }
 
-  public collect(agg: Aggregator = new Aggregator()): string {
+  public collect(
+    agg: Aggregator = new DefaultAggregator(),
+  ): string {
     this.aggregate(agg);
-    return agg.format();
-  }
-
-  private combinedLabels(labels?: Labels): Labels | undefined {
-    return mergeLabels(this.config.defaultLabels, labels);
-  }
-}
-
-function mergeLabels(a?: Labels, b?: Labels): Labels | undefined {
-  if (a && b) {
-    return { ...a, ...b };
-  } else {
-    return a || b;
+    return agg.toString();
   }
 }
