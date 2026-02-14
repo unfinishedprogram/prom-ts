@@ -1,5 +1,5 @@
 import { defaultFormatter, type MetricFormatter } from "./format";
-import type { Labels } from "./metric/metric";
+import type { Labels, MetricType } from "./metric/metric";
 
 export type Metadata = {
   name: string;
@@ -27,7 +27,7 @@ export class Aggregator {
   constructor(public formatter: MetricFormatter = defaultFormatter) {
   }
 
-  public addMeta(name: string, type: string, description?: string) {
+  public addMeta(name: string, type: MetricType, description?: string) {
     this.entries.push({ name, type, description });
     return this;
   }
@@ -36,6 +36,17 @@ export class Aggregator {
     this.entries.push({ name, value, labels });
     return this;
   }
+
+  public observe = (
+    name: string,
+    type: MetricType,
+    value: number,
+    description?: string,
+    labels?: Record<string, string>,
+  ) => {
+    this.addMeta(name, type, description);
+    this.addSample(name, value, labels);
+  };
 
   public format(formatter: MetricFormatter = this.formatter): string {
     let result = "";
