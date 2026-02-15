@@ -1,16 +1,21 @@
 import { describe, expect, test } from "bun:test";
 import Histogram from "./histogram";
-import TestAggregator from "../test/testAggregator";
+import { BaseAggregator } from "../aggregator";
 
 describe("Histogram", () => {
   describe("Constructor", () => {
     test("Creates histogram with default buckets", () => {
       const histogram = new Histogram("test_histogram");
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric('test_histogram_bucket{"le":"0.005"}')).toBeObject();
-      expect(agg.getMetric("test_histogram_count")).toBeObject();
-      expect(agg.getMetric("test_histogram_sum")).toBeObject();
+      expect(agg.metrics["test_histogram"]!.type).toBe("histogram");
+
+      expect(agg.metrics["test_histogram_bucket"]!.samples).toBeArrayOfSize(12);
+
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 0, labels: { le: "0.005" } });
+      expect(agg.metrics["test_histogram_count"]!.samples).toBeDefined();
+      expect(agg.metrics["test_histogram_sum"]!.samples).toBeDefined();
     });
 
     test("Creates histogram with labels", () => {
@@ -18,14 +23,16 @@ describe("Histogram", () => {
         method: "GET",
         path: "/api",
       });
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(
-        agg.getMetric('test_histogram_count{"method":"GET","path":"/api"}'),
-      ).toBeObject();
-      expect(
-        agg.getMetric('test_histogram_sum{"method":"GET","path":"/api"}'),
-      ).toBeObject();
+      expect(agg.metrics["test_histogram_count"]!.samples)
+        .toContainEqual(
+          expect.objectContaining({ labels: { method: "GET", path: "/api" } }),
+        );
+      expect(agg.metrics["test_histogram_sum"]!.samples)
+        .toContainEqual(
+          expect.objectContaining({ labels: { method: "GET", path: "/api" } }),
+        );
     });
 
     test("Throws error if label key is 'le'", () => {
@@ -40,10 +47,10 @@ describe("Histogram", () => {
       const histogram = new Histogram("test_histogram");
       histogram.observe(0.5);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(1);
-      expect(agg.getMetric("test_histogram_sum")?.value).toBe(0.5);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(1);
+      expect(agg.metrics["test_histogram_sum"]!.samples[0]?.value).toBe(0.5);
     });
 
     test("Records multiple observations", () => {
@@ -52,10 +59,10 @@ describe("Histogram", () => {
       histogram.observe(1.5);
       histogram.observe(2.5);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(3);
-      expect(agg.getMetric("test_histogram_sum")?.value).toBe(4.5);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(3);
+      expect(agg.metrics["test_histogram_sum"]!.samples[0]?.value).toBe(4.5);
     });
 
     test("Places observations in correct buckets", () => {
@@ -65,32 +72,29 @@ describe("Histogram", () => {
       histogram.observe(0.5); // On sixth bucket
       histogram.observe(15); // Above all buckets
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(4);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(4);
 
       // First bucket (0.005) should have 1 (cumulative)
-      expect(agg.getMetric('test_histogram_bucket{"le":"0.005"}')?.value).toBe(
-        1,
-      );
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 1, labels: { le: "0.005" } });
 
       // Second bucket (0.01) should have 2 (cumulative)
-      expect(agg.getMetric('test_histogram_bucket{"le":"0.01"}')?.value).toBe(
-        2,
-      );
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 2, labels: { le: "0.01" } });
 
       // +Inf bucket should have all 4
-      expect(agg.getMetric('test_histogram_bucket{"le":"+Inf"}')?.value).toBe(
-        4,
-      );
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 4, labels: { le: "+Inf" } });
     });
   });
 
   describe("Default buckets", () => {
     test("Uses default buckets correctly", () => {
       const histogram = new Histogram("test_histogram");
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
       const expectedBuckets = [
@@ -108,8 +112,8 @@ describe("Histogram", () => {
       ];
 
       for (const le of expectedBuckets) {
-        expect(agg.getMetric(`test_histogram_bucket{"le":"${le}"}`))
-          .toBeObject();
+        expect(agg.metrics["test_histogram_bucket"]!.samples)
+          .toContainEqual(expect.objectContaining({ labels: { le } }));
       }
     });
   });
@@ -123,14 +127,15 @@ describe("Histogram", () => {
       histogram.observe(15);
       histogram.observe(25);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(3);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(3);
 
       const labels = ["0", "10", "20", "30", "40", "+Inf"];
       for (const le of labels) {
-        expect(agg.getMetric(`test_histogram_bucket{"le":"${le}"}`))
-          .toBeObject();
+        expect(agg.metrics["test_histogram_bucket"]!.samples).toContainEqual(
+          expect.objectContaining({ labels: { le } }),
+        );
       }
     });
 
@@ -150,13 +155,15 @@ describe("Histogram", () => {
       histogram.observe(3);
       histogram.observe(10);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
       const labels = ["1", "2", "4", "8", "+Inf"];
       for (const le of labels) {
-        expect(agg.getMetric(`test_histogram_bucket{"le":"${le}"}`))
-          .toBeObject();
+        expect(agg.metrics[`test_histogram_bucket`]).toBeObject();
+        expect(agg.metrics[`test_histogram_bucket`]!.samples).toContainEqual(
+          expect.objectContaining({ labels: { le } }),
+        );
       }
     });
 
@@ -243,27 +250,25 @@ describe("Histogram", () => {
       histogram.observe(2); // Exactly on second bucket
       histogram.observe(5); // Above all buckets
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
-      expect(agg.getMetric(`test_histogram_bucket{"le":"1"}`)?.value)
-        .toBe(2);
-      expect(agg.getMetric(`test_histogram_bucket{"le":"2"}`)?.value)
-        .toBe(3);
-      expect(agg.getMetric(`test_histogram_bucket{"le":"3"}`)?.value)
-        .toBe(3);
-      expect(agg.getMetric(`test_histogram_bucket{"le":"+Inf"}`)?.value)
-        .toBe(4);
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 2, labels: { le: "1" } });
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 3, labels: { le: "2" } });
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 3, labels: { le: "3" } });
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 4, labels: { le: "+Inf" } });
     });
 
     test("Empty histogram has zero counts", () => {
       const histogram = new Histogram("test_histogram");
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      agg.samples.forEach((sample) => {
-        if (sample.name.endsWith("_bucket")) {
-          expect(sample.value).toBe(0);
-        }
+      agg.metrics["test_histogram_bucket"]!.samples.forEach((sample) => {
+        expect(sample.value).toBe(0);
       });
     });
   });
@@ -273,10 +278,10 @@ describe("Histogram", () => {
       const histogram = new Histogram("test_histogram");
       histogram.observe(0);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(1);
-      expect(agg.getMetric("test_histogram_sum")?.value).toBe(0);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(1);
+      expect(agg.metrics["test_histogram_sum"]!.samples[0]?.value).toBe(0);
     });
 
     test("Handles negative values correctly", () => {
@@ -284,23 +289,23 @@ describe("Histogram", () => {
       histogram.observe(-5);
       histogram.observe(-1);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(2);
-      expect(agg.getMetric("test_histogram_sum")?.value).toBe(-6);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(2);
+      expect(agg.metrics["test_histogram_sum"]!.samples[0]?.value).toBe(-6);
     });
 
     test("Handles very large values", () => {
       const histogram = new Histogram("test_histogram");
       histogram.observe(1000000);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(1);
-      expect(agg.getMetric("test_histogram_sum")?.value).toBe(1000000);
-      expect(agg.getMetric('test_histogram_bucket{"le":"+Inf"}')?.value).toBe(
-        1,
-      );
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(1);
+      expect(agg.metrics["test_histogram_sum"]!.samples[0]?.value)
+        .toBe(1000000);
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 1, labels: { le: "+Inf" } });
     });
 
     test("Handles values exactly on bucket boundaries", () => {
@@ -311,17 +316,20 @@ describe("Histogram", () => {
       histogram.observe(2);
       histogram.observe(3);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
       // Value 1 should be in bucket le="1"
-      expect(agg.getMetric('test_histogram_bucket{"le":"1"}')?.value).toBe(1);
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 1, labels: { le: "1" } });
 
       // Value 2 should be in bucket le="2" (cumulative: 2)
-      expect(agg.getMetric('test_histogram_bucket{"le":"2"}')?.value).toBe(2);
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 2, labels: { le: "2" } });
 
       // Value 3 should be in bucket le="3" (cumulative: 3)
-      expect(agg.getMetric('test_histogram_bucket{"le":"3"}')?.value).toBe(3);
+      expect(agg.metrics["test_histogram_bucket"]!.samples)
+        .toContainEqual({ value: 3, labels: { le: "3" } });
     });
   });
 
@@ -335,37 +343,37 @@ describe("Histogram", () => {
       histogram.observe(3);
       histogram.observe(-3125);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(5);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(5);
 
-      expect(agg.getMetric("test_histogram_min")?.value).toBe(-3125);
-      expect(agg.getMetric("test_histogram_max")?.value).toBe(10);
+      expect(agg.metrics["test_histogram_min"]!.samples[0]?.value).toBe(-3125);
+      expect(agg.metrics["test_histogram_max"]!.samples[0]?.value).toBe(10);
     });
 
     test("Handles single observation for min and max", () => {
       const histogram = new Histogram("test_histogram");
       histogram.observe(7);
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(1);
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(1);
 
-      expect(agg.getMetric("test_histogram_min")?.value).toBe(7);
-      expect(agg.getMetric("test_histogram_max")?.value).toBe(7);
+      expect(agg.metrics["test_histogram_min"]!.samples[0]?.value).toBe(7);
+      expect(agg.metrics["test_histogram_max"]!.samples[0]?.value).toBe(7);
     });
 
     test("Handles no observations for min and max", () => {
       const histogram = new Histogram("test_histogram");
 
-      const agg = new TestAggregator();
+      const agg = new BaseAggregator();
       histogram.aggregate(agg);
 
-      expect(agg.getMetric("test_histogram_count")?.value).toBe(0);
-      expect(agg.getMetric("test_histogram_min")?.value).toBeNaN();
-      expect(agg.getMetric("test_histogram_max")?.value).toBeNaN();
+      expect(agg.metrics["test_histogram_count"]!.samples[0]?.value).toBe(0);
+      expect(agg.metrics["test_histogram_min"]!.samples[0]?.value).toBeNaN();
+      expect(agg.metrics["test_histogram_max"]!.samples[0]?.value).toBeNaN();
     });
   });
 });

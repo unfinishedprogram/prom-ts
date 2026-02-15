@@ -2,16 +2,15 @@ import { defaultFormatter, type MetricFormatter } from "./format";
 import { mergeLabels } from "./util";
 import type { Labels, MetricType } from "./metric/metric";
 
-export type Metadata = {
-  name: string;
-  type: string;
-  description?: string;
+export type AggregateSample = {
+  value: number;
+  labels?: Record<string, string>;
 };
 
-export type Sample = {
-  name: string;
-  value: number;
-  labels?: Labels;
+type AggregateEntry = {
+  type: MetricType;
+  description?: string;
+  samples: AggregateSample[];
 };
 
 export interface Aggregator {
@@ -20,11 +19,68 @@ export interface Aggregator {
   observe(
     name: string,
     type: MetricType,
-    value: number,
-    description?: string,
-    labels?: Record<string, string>,
+    description: string | undefined,
+    samples: AggregateSample[],
   ): void;
   format(formatter: MetricFormatter): string;
+  toString(): string;
+}
+
+export class BaseAggregator implements Aggregator {
+  public readonly metrics: Record<string, AggregateEntry> = {};
+
+  constructor() {}
+
+  observe(
+    name: string,
+    type: MetricType,
+    description: string | undefined,
+    samples: AggregateSample[],
+  ) {
+    this.addMeta(name, type, description);
+    for (const sample of samples) {
+      this.addSample(name, sample.value, sample.labels);
+    }
+  }
+
+  addMeta(name: string, type: MetricType, description?: string) {
+    if (!this.metrics[name]) {
+      this.metrics[name] = { type, description, samples: [] };
+    } else {
+      this.metrics[name].type = type;
+      this.metrics[name].description = description;
+    }
+  }
+
+  addSample(name: string, value: number, labels?: Record<string, string>) {
+    if (!this.metrics[name]) {
+      // Default to gauge type if meta is not defined
+      this.metrics[name] = { type: "gauge", samples: [{ value, labels }] };
+    } else {
+      this.metrics[name].samples.push({ value, labels });
+    }
+  }
+
+  format(formatter: MetricFormatter): string {
+    let result = "";
+    for (const [name, entry] of Object.entries(this.metrics)) {
+      if (entry.samples.length === 0) continue;
+
+      result += formatter.metadata(name, entry.type, entry.description);
+
+      for (const sample of entry.samples) {
+        result += formatter.timeseries(name, sample.value, sample.labels);
+      }
+
+      result += "\n";
+    }
+
+    return result;
+  }
+
+  toString() {
+    return this.format(defaultFormatter);
+  }
 }
 
 export class LabelingAggregator implements Aggregator {
@@ -48,71 +104,18 @@ export class LabelingAggregator implements Aggregator {
   observe(
     name: string,
     type: MetricType,
-    value: number,
-    description?: string,
-    labels?: Record<string, string>,
+    description: string | undefined,
+    samples: AggregateSample[],
   ) {
-    this.baseAggregator.observe(
-      name,
-      type,
-      value,
-      description,
-      mergeLabels(this.defaultLabels, labels),
-    );
+    const mergedSamples = samples.map((sample) => ({
+      value: sample.value,
+      labels: mergeLabels(this.defaultLabels, sample.labels),
+    }));
+
+    this.baseAggregator.observe(name, type, description, mergedSamples);
   }
 
   format(formatter: MetricFormatter): string {
     return this.baseAggregator.format(formatter);
-  }
-}
-
-export class SimpleAggregator implements Aggregator {
-  constructor() {}
-
-  entries: (Metadata | Sample)[] = [];
-
-  get metadata() {
-    return this.entries.filter((entry): entry is Metadata => "type" in entry);
-  }
-
-  get samples() {
-    return this.entries.filter((entry): entry is Sample => "value" in entry);
-  }
-
-  public addMeta(name: string, type: MetricType, description?: string) {
-    this.entries.push({ name, type, description });
-  }
-
-  public addSample(name: string, value: number, labels?: Labels) {
-    this.entries.push({ name, value, labels });
-  }
-
-  public observe = (
-    name: string,
-    type: MetricType,
-    value: number,
-    description?: string,
-    labels?: Record<string, string>,
-  ) => {
-    this.addMeta(name, type, description);
-    this.addSample(name, value, labels);
-  };
-
-  public format(formatter: MetricFormatter): string {
-    let result = "";
-
-    for (const entry of this.entries) {
-      if ("type" in entry) {
-        result += formatter.metadata(entry.name, entry.type, entry.description);
-      } else {
-        result += formatter.timeseries(entry.name, entry.value, entry.labels);
-      }
-    }
-
-    return result;
-  }
-
-  public toString(): string {
-    return this.format(defaultFormatter);
   }
 }

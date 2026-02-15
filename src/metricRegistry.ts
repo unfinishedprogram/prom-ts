@@ -6,8 +6,8 @@ import Metric, { type Labels } from "./metric/metric";
 import type Collector from "./collector";
 import {
   type Aggregator,
+  BaseAggregator,
   LabelingAggregator,
-  SimpleAggregator,
 } from "./aggregator";
 import { mergeLabels } from "./util";
 
@@ -109,7 +109,7 @@ export default class MetricRegistry implements Collector {
   }
 
   public collect(
-    agg: Aggregator = new SimpleAggregator(),
+    agg: Aggregator = new BaseAggregator(),
   ): string {
     this.aggregate(agg);
     return agg.toString();

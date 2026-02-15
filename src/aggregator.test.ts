@@ -1,7 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
-import { LabelingAggregator, SimpleAggregator } from "./aggregator";
+import { BaseAggregator, LabelingAggregator } from "./aggregator";
 import type { MetadataFormatter, TimeseriesFormatter } from "./format";
-import TestAggregator from "./test/testAggregator";
 
 describe("Aggregator", () => {
   test("custom formatter is used if provided", () => {
@@ -9,7 +8,7 @@ describe("Aggregator", () => {
       timeseries: mock<TimeseriesFormatter>(),
       metadata: mock<MetadataFormatter>(),
     };
-    const aggregator = new SimpleAggregator();
+    const aggregator = new BaseAggregator();
 
     aggregator.addMeta("metric_name", "counter", "A counter metric");
     aggregator.addSample("metric_name", 42, { label1: "value1" });
@@ -24,39 +23,33 @@ describe("Aggregator", () => {
 
   describe("Observe method", () => {
     test("observe adds both metadata and sample entries", () => {
-      const aggregator = new SimpleAggregator();
+      const aggregator = new BaseAggregator();
 
       aggregator.observe(
         "observed_metric",
         "counter",
-        100,
         "An observed counter metric",
-        { labelA: "valueA" },
+        [{ value: 100, labels: { labelA: "valueA" } }],
       );
 
-      expect(aggregator.metadata[0]).toEqual({
-        name: "observed_metric",
-        type: "counter",
-        description: "An observed counter metric",
-      });
-
-      expect(aggregator.samples[0]).toEqual({
-        name: "observed_metric",
-        value: 100,
-        labels: { labelA: "valueA" },
-      });
+      expect(aggregator.metrics["observed_metric"]).toEqual(
+        {
+          type: "counter",
+          description: "An observed counter metric",
+          samples: [{ value: 100, labels: { labelA: "valueA" } }],
+        },
+      );
     });
 
     test("observe produces the same results as separate addMeta and addSample calls", () => {
-      const aggregator1 = new SimpleAggregator();
-      const aggregator2 = new SimpleAggregator();
+      const aggregator1 = new BaseAggregator();
+      const aggregator2 = new BaseAggregator();
 
       aggregator1.observe(
         "observed_metric",
         "counter",
-        100,
         "An observed counter metric",
-        { labelA: "valueA" },
+        [{ value: 100, labels: { labelA: "valueA" } }],
       );
 
       aggregator2.addMeta(
@@ -66,8 +59,7 @@ describe("Aggregator", () => {
       );
       aggregator2.addSample("observed_metric", 100, { labelA: "valueA" });
 
-      expect(aggregator1.metadata).toEqual(aggregator2.metadata);
-      expect(aggregator1.samples).toEqual(aggregator2.samples);
+      expect(aggregator1.metrics).toEqual(aggregator2.metrics);
 
       expect(aggregator1.toString()).toEqual(aggregator2.toString());
     });
@@ -75,7 +67,7 @@ describe("Aggregator", () => {
 
   describe("Labeling aggregator", () => {
     test("LabelingAggregator applies default labels to metadata and samples", () => {
-      const baseAggregator = new TestAggregator();
+      const baseAggregator = new BaseAggregator();
       const labelingAggregator = new LabelingAggregator(baseAggregator, {
         env: "production",
         service: "user-service",
@@ -84,26 +76,25 @@ describe("Aggregator", () => {
       labelingAggregator.observe(
         "test_metric",
         "gauge",
-        123,
         "A test metric",
-        { region: "us-east" },
+        [{ value: 123, labels: { region: "us-east" } }],
       );
 
-      expect(baseAggregator.metadata[0]).toEqual({
-        name: "test_metric",
-        type: "gauge",
-        description: "A test metric",
-      });
-
-      expect(baseAggregator.samples[0]).toEqual({
-        name: "test_metric",
-        value: 123,
-        labels: {
-          env: "production",
-          service: "user-service",
-          region: "us-east",
-        },
-      });
+      expect(baseAggregator.metrics["test_metric"])
+        .toEqual({
+          type: "gauge",
+          description: "A test metric",
+          samples: [
+            {
+              value: 123,
+              labels: {
+                env: "production",
+                service: "user-service",
+                region: "us-east",
+              },
+            },
+          ],
+        });
     });
   });
 });
