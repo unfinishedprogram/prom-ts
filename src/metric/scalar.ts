@@ -1,4 +1,4 @@
-import { Aggregator } from "../aggregator";
+import type { Aggregator } from "../aggregator";
 import Metric from "./metric";
 
 export default abstract class Scalar extends Metric {
