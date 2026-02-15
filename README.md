@@ -44,6 +44,13 @@ const memoryObserver = metrics.observer(
   () => memoryUsed
 );
 
+// Observers default to gauge type, but can be set to counter type
+let totalRequests = 0;
+const requestObserver = metrics.observer(
+  "total_requests",
+  () => totalRequests
+).ofType("counter");
+
 // Export metrics in Prometheus format
 const output = metrics.collect();
 console.log(output);
@@ -75,6 +82,13 @@ const sessionObserver = registry.observer(
   "active_sessions",
   () => activeSessions
 );
+
+// Observers can also be configured as counters
+let processedItems = 0;
+const itemsObserver = registry.observer(
+  "items_processed_total",
+  () => processedItems
+).ofType("counter");
 
 // Collect metrics from this specific registry
 const metrics = registry.collect();
