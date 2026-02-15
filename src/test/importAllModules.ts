@@ -1,5 +1,6 @@
 const DEFAULT_EXCLUDE = [".test.ts", ".d.ts"];
 
+// Required for proper coverage. Bun only tracks coverage for imported modules
 export async function importAllModules(
   dir: string,
   exclude: string[] = [],
