@@ -17,4 +17,6 @@ export {
   Observer,
 };
 
+export * as collectors from "./src/collectors";
+
 export default MetricRegistry.DEFAULT_REGISTRY;
