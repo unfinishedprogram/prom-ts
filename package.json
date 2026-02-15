@@ -8,7 +8,8 @@
     "src/**"
   ],
   "scripts": {
-    "bench": "bun run perf/bench.ts"
+    "bench": "bun run perf/bench.ts",
+    "check": "bunx tsc --noEmit"
   },
   "devDependencies": {
     "@types/bun": "latest"
