@@ -4,7 +4,7 @@ import Histogram from "./src/metric/histogram";
 import Observer from "./src/metric/observer";
 import type Collector from "./src/collector";
 
-import MetricRegistry from "./src/collector_registry";
+import MetricRegistry from "./src/metricRegistry";
 import Metric from "./src/metric/metric";
 
 export {

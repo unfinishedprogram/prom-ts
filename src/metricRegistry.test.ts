@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import MetricRegistry from "./collector_registry";
+import MetricRegistry from "./metricRegistry";
 import TestAggregator from "./test/testAggregator";
 
 describe("MetricRegistry registration semantics", () => {

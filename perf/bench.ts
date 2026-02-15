@@ -1,5 +1,5 @@
 import { DefaultAggregator } from "../src/aggregator";
-import MetricRegistry from "../src/collector_registry";
+import MetricRegistry from "../src/metricRegistry";
 
 type BenchConfig = {
   batchSize: number;
