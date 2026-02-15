@@ -66,7 +66,7 @@ export class LabelingAggregator implements Aggregator {
   }
 }
 
-export class DefaultAggregator implements Aggregator {
+export class SimpleAggregator implements Aggregator {
   constructor() {}
 
   entries: (Metadata | Sample)[] = [];

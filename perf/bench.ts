@@ -1,4 +1,4 @@
-import { DefaultAggregator } from "../src/aggregator";
+import { SimpleAggregator } from "../src/aggregator";
 import MetricRegistry from "../src/metricRegistry";
 
 type BenchConfig = {
@@ -113,7 +113,7 @@ const runBenchmarks = () => {
           counter1.inc();
           counter2.inc(2);
         }
-        const aggregator = new DefaultAggregator();
+        const aggregator = new SimpleAggregator();
         return [registry, aggregator] as const;
       },
       ([registry, aggregator]) => {

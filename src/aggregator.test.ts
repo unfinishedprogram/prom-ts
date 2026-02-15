@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import { DefaultAggregator, LabelingAggregator } from "./aggregator";
+import { LabelingAggregator, SimpleAggregator } from "./aggregator";
 import type { MetadataFormatter, TimeseriesFormatter } from "./format";
 import TestAggregator from "./test/testAggregator";
 
@@ -9,7 +9,7 @@ describe("Aggregator", () => {
       timeseries: mock<TimeseriesFormatter>(),
       metadata: mock<MetadataFormatter>(),
     };
-    const aggregator = new DefaultAggregator();
+    const aggregator = new SimpleAggregator();
 
     aggregator.addMeta("metric_name", "counter", "A counter metric");
     aggregator.addSample("metric_name", 42, { label1: "value1" });
@@ -24,7 +24,7 @@ describe("Aggregator", () => {
 
   describe("Observe method", () => {
     test("observe adds both metadata and sample entries", () => {
-      const aggregator = new DefaultAggregator();
+      const aggregator = new SimpleAggregator();
 
       aggregator.observe(
         "observed_metric",
@@ -48,8 +48,8 @@ describe("Aggregator", () => {
     });
 
     test("observe produces the same results as separate addMeta and addSample calls", () => {
-      const aggregator1 = new DefaultAggregator();
-      const aggregator2 = new DefaultAggregator();
+      const aggregator1 = new SimpleAggregator();
+      const aggregator2 = new SimpleAggregator();
 
       aggregator1.observe(
         "observed_metric",
