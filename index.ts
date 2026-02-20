@@ -7,6 +7,11 @@ import type Collector from "./src/collector";
 import MetricRegistry from "./src/metricRegistry";
 import Metric from "./src/metric/metric";
 
+import {
+  registerServerMetrics,
+  SystemMetricsCollector,
+} from "./src/collectors/bun";
+
 export {
   type Collector,
   Counter,
@@ -15,6 +20,8 @@ export {
   Metric,
   MetricRegistry,
   Observer,
+  registerServerMetrics,
+  SystemMetricsCollector,
 };
 
 export default MetricRegistry.DEFAULT_REGISTRY;
