@@ -9,7 +9,6 @@ export function registerServerMetrics(
   registry.observer(
     "bun_server_pending_requests",
     () => server.pendingRequests,
-    "gauge",
     labels,
   ).describe("Number of pending requests");
 }

@@ -1,16 +1,15 @@
-import Scalar from "./scalar";
+import Gauge from "./gauge";
 
-export default class Observer extends Scalar {
+export default class Observer extends Gauge {
   public constructor(
     name: string,
     private readonly observeFn: () => number,
-    type: "gauge" | "counter" = "gauge",
     labels?: Readonly<Record<string, string>>,
   ) {
-    super(name, type, labels);
+    super(name, labels);
   }
 
-  get value(): number {
+  override get value(): number {
     return this.observeFn();
   }
 }

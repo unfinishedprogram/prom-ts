@@ -85,13 +85,12 @@ export default class MetricRegistry implements Collector {
   public observer(
     name: string,
     observeFn: () => number,
-    type: "counter" | "gauge" = "gauge",
     labels?: Labels,
   ) {
     const key = Metric.hashKey(name, labels);
 
     if (!this.metrics.has(key)) {
-      const observer = new Observer(name, observeFn, type, labels);
+      const observer = new Observer(name, observeFn, labels);
       this.register(observer);
       return observer;
     } else {
