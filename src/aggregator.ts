@@ -157,4 +157,8 @@ export class LabelingAggregator implements Aggregator {
   format(formatter: MetricFormatter): string {
     return this.baseAggregator.format(formatter);
   }
+
+  toString(): string {
+    return this.baseAggregator.toString();
+  }
 }
