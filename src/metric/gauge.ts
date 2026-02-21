@@ -2,10 +2,9 @@ import Scalar from "./scalar";
 
 export default class Gauge extends Scalar {
   private _value: number = 0;
-  override metricType = "gauge" as const;
 
   constructor(name: string, labels?: Record<string, string>) {
-    super(name, labels);
+    super(name, "gauge", labels);
   }
 
   public set(value: number): void {

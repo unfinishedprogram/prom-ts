@@ -1,15 +1,33 @@
-import type { Aggregator } from "../aggregator";
-import Metric from "./metric";
+import type { Aggregator, MetricSample } from "../aggregator";
+import Metric, { type MetricType } from "./metric";
 
 export default abstract class Scalar extends Metric {
   public abstract readonly value: number;
 
-  constructor(name: string, labels?: Record<string, string>) {
+  #metricType!: "counter" | "gauge";
+
+  get metricType(): "counter" | "gauge" {
+    return this.#metricType;
+  }
+
+  constructor(
+    name: string,
+    metricType: "counter" | "gauge",
+    labels?: Record<string, string>,
+  ) {
     super(name, labels);
+    this.#metricType = metricType;
   }
 
   aggregate(agg: Aggregator) {
-    agg.addMeta(this.name, this.metricType, this.description);
-    agg.addSample(this.name, this.value, this.labels);
+    const metric = {
+      name: this.name,
+      type: this.metricType,
+      description: this.description,
+      value: this.value,
+      labels: this.labels,
+    } satisfies MetricSample;
+
+    agg.observe(metric);
   }
 }

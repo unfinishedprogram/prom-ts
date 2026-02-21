@@ -2,7 +2,7 @@ import type { Aggregator } from "../aggregator";
 import type Collector from "../collector";
 
 export type Labels = Readonly<Record<string, string>>;
-export type MetricType = "counter" | "gauge" | "histogram" | "summary";
+export type MetricType = "counter" | "gauge" | "histogram";
 
 export default abstract class Metric implements Collector {
   abstract readonly metricType: MetricType;

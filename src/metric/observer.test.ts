@@ -20,12 +20,18 @@ describe("Observer", () => {
     const defaultObserver = new Observer("test_observer", () => 10);
     expect(defaultObserver.metricType).toBe("gauge");
 
-    const counterObserver = new Observer("test_counter_observer", () => 20)
-      .ofType("counter");
+    const counterObserver = new Observer(
+      "test_counter_observer",
+      () => 20,
+      "counter",
+    );
     expect(counterObserver.metricType).toBe("counter");
 
-    const gaugeObserver = new Observer("test_gauge_observer", () => 30)
-      .ofType("gauge");
+    const gaugeObserver = new Observer(
+      "test_gauge_observer",
+      () => 30,
+      "gauge",
+    );
     expect(gaugeObserver.metricType).toBe("gauge");
   });
 });

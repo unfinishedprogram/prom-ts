@@ -2,10 +2,9 @@ import Scalar from "./scalar";
 
 export default class Counter extends Scalar {
   private _value: number = 0;
-  override metricType = "counter" as const;
 
   constructor(name: string, labels?: Record<string, string>) {
-    super(name, labels);
+    super(name, "counter", labels);
   }
 
   public inc(value: number = 1): void {

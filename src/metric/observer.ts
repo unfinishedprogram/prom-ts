@@ -4,19 +4,10 @@ export default class Observer extends Scalar {
   public constructor(
     name: string,
     private readonly observeFn: () => number,
+    type: "gauge" | "counter" = "gauge",
     labels?: Readonly<Record<string, string>>,
   ) {
-    super(name, labels);
-  }
-
-  #metricType: "gauge" | "counter" = "gauge";
-  get metricType() {
-    return this.#metricType;
-  }
-
-  public ofType(type: "gauge" | "counter"): this {
-    this.#metricType = type;
-    return this;
+    super(name, type, labels);
   }
 
   get value(): number {

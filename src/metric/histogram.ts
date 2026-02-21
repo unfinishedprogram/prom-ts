@@ -1,4 +1,4 @@
-import type { Aggregator } from "../aggregator.type";
+import type { Aggregator } from "../aggregator";
 import Metric from "./metric";
 
 export default class Histogram extends Metric {
@@ -112,6 +112,7 @@ export default class Histogram extends Metric {
 
     agg.observe({
       name: this.name,
+      description: this.description,
       labels: this.labels,
       buckets,
       count: this.count,
