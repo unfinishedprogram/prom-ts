@@ -13,8 +13,6 @@ export type HistogramSample = {
   }[];
   count: number;
   sum: number;
-  min: number;
-  max: number;
 };
 
 export type CounterSample = {
@@ -95,16 +93,6 @@ export class BaseAggregator implements Aggregator {
     result += formatter.timeseries(
       `${sample.name}_sum`,
       sample.sum,
-      sample.labels,
-    );
-    result += formatter.timeseries(
-      `${sample.name}_min`,
-      sample.min,
-      sample.labels,
-    );
-    result += formatter.timeseries(
-      `${sample.name}_max`,
-      sample.max,
       sample.labels,
     );
 

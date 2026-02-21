@@ -55,8 +55,6 @@ describe("Histogram", () => {
       const sample = agg.histograms["test_histogram"]!.samples[0]!;
       expect(sample.count).toBe(1);
       expect(sample.sum).toBe(0.5);
-      expect(sample.min).toBe(0.5);
-      expect(sample.max).toBe(0.5);
     });
 
     test("Records multiple observations", () => {
@@ -70,8 +68,6 @@ describe("Histogram", () => {
       const sample = agg.histograms["test_histogram"]!.samples[0]!;
       expect(sample.count).toBe(3);
       expect(sample.sum).toBe(4.5);
-      expect(sample.min).toBe(0.5);
-      expect(sample.max).toBe(2.5);
     });
 
     test("Places observations in correct buckets", () => {
@@ -340,51 +336,6 @@ describe("Histogram", () => {
 
       // Value 3 should be in bucket le="3" (cumulative: 3)
       expect(sample.buckets).toContainEqual({ le: "3", count: 3 });
-    });
-  });
-
-  describe("Min and Max tracking", () => {
-    test("Tracks min and max correctly", () => {
-      const histogram = new Histogram("test_histogram");
-
-      histogram.observe(5);
-      histogram.observe(1);
-      histogram.observe(10);
-      histogram.observe(3);
-      histogram.observe(-3125);
-
-      const agg = new TestAggregator();
-      histogram.aggregate(agg);
-      const sample = agg.histograms["test_histogram"]!.samples[0]!;
-
-      expect(sample.count).toBe(5);
-      expect(sample.min).toBe(-3125);
-      expect(sample.max).toBe(10);
-    });
-
-    test("Handles single observation for min and max", () => {
-      const histogram = new Histogram("test_histogram");
-      histogram.observe(7);
-
-      const agg = new TestAggregator();
-      histogram.aggregate(agg);
-      const sample = agg.histograms["test_histogram"]!.samples[0]!;
-
-      expect(sample.count).toBe(1);
-      expect(sample.min).toBe(7);
-      expect(sample.max).toBe(7);
-    });
-
-    test("Handles no observations for min and max", () => {
-      const histogram = new Histogram("test_histogram");
-
-      const agg = new TestAggregator();
-      histogram.aggregate(agg);
-      const sample = agg.histograms["test_histogram"]!.samples[0]!;
-
-      expect(sample.count).toBe(0);
-      expect(sample.min).toBeNaN();
-      expect(sample.max).toBeNaN();
     });
   });
 
