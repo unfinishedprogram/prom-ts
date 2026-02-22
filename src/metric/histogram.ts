@@ -9,8 +9,6 @@ export default class Histogram extends Metric {
 
   private count = 0;
   private sum = 0;
-  private min = NaN;
-  private max = NaN;
 
   override metricType = "histogram" as const;
   constructor(
@@ -83,8 +81,6 @@ export default class Histogram extends Metric {
 
     this.bucketCounts[bucketIndex]! += 1;
     this.count += 1;
-    this.min = Number.isNaN(this.min) ? value : Math.min(this.min, value);
-    this.max = Number.isNaN(this.max) ? value : Math.max(this.max, value);
     this.sum += value;
   }
 
@@ -99,26 +95,25 @@ export default class Histogram extends Metric {
   }
 
   aggregate(agg: Aggregator) {
-    agg.addMeta(this.name, this.metricType, this.description);
-
     let cumulativeCount = 0;
-
-    const bucket_name = `${this.name}_bucket`;
+    const buckets = [];
     for (let i = 0; i < this.bucketCounts.length; i++) {
       cumulativeCount += this.bucketCounts[i]!;
-
       const leLabel = i < this.bucketsLe.length
         ? this.bucketsLe[i]!.toString()
         : "+Inf";
 
-      const labels = { ...this.labels, le: leLabel };
-
-      agg.addSample(bucket_name, cumulativeCount, labels);
+      buckets.push({ le: leLabel, count: cumulativeCount });
     }
 
-    agg.addSample(`${this.name}_count`, this.count, this.labels);
-    agg.addSample(`${this.name}_sum`, this.sum, this.labels);
-    agg.addSample(`${this.name}_min`, this.min, this.labels);
-    agg.addSample(`${this.name}_max`, this.max, this.labels);
+    agg.observe({
+      name: this.name,
+      description: this.description,
+      labels: this.labels,
+      buckets,
+      count: this.count,
+      sum: this.sum,
+      type: "histogram",
+    });
   }
 }

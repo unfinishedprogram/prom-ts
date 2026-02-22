@@ -40,7 +40,11 @@ describe("MetricRegistry registration semantics", () => {
     const agg = new BaseAggregator();
     registry.aggregate(agg);
     expect(agg.metrics["test_gauge"]).toBeDefined();
-    expect(agg.metrics["test_gauge"]?.samples[0]?.value).toBe(0);
+    expect(agg.metrics["test_gauge"]?.samples[0]).toMatchObject({
+      name: "test_gauge",
+      type: "gauge",
+      value: 0,
+    });
 
     registry.unregister(gauge);
 
@@ -93,9 +97,19 @@ describe("Default labels in MetricRegistry", () => {
     registry.aggregate(agg);
 
     expect(agg.metrics["labeled_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "test" } });
+      .toContainEqual(expect.objectContaining({
+        name: "labeled_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "test" },
+      }));
     expect(agg.metrics["labeled_gauge"]!.samples)
-      .toContainEqual({ value: 5, labels: { env: "test" } });
+      .toContainEqual(expect.objectContaining({
+        name: "labeled_gauge",
+        type: "gauge",
+        value: 5,
+        labels: { env: "test" },
+      }));
   });
 
   test("Metrics can override default labels", () => {
@@ -112,12 +126,19 @@ describe("Default labels in MetricRegistry", () => {
     registry.aggregate(agg);
 
     expect(agg.metrics["labeled_counter"]!.samples)
-      .toContainEqual({
+      .toContainEqual(expect.objectContaining({
+        name: "labeled_counter",
+        type: "counter",
         value: 1,
         labels: { env: "test", other_label: "no_override" },
-      });
+      }));
     expect(agg.metrics["labeled_gauge"]!.samples)
-      .toContainEqual({ value: 5, labels: { env: "prod" } });
+      .toContainEqual(expect.objectContaining({
+        name: "labeled_gauge",
+        type: "gauge",
+        value: 5,
+        labels: { env: "prod" },
+      }));
   });
 
   test("Metrics labels are merged with default labels", () => {
@@ -132,7 +153,12 @@ describe("Default labels in MetricRegistry", () => {
     registry.aggregate(agg);
 
     expect(agg.metrics["labeled_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "test", method: "GET" } });
+      .toContainEqual(expect.objectContaining({
+        name: "labeled_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "test", method: "GET" },
+      }));
   });
 });
 
@@ -146,7 +172,11 @@ describe("MetricRegistry children", () => {
 
     const agg = new BaseAggregator();
     parentRegistry.aggregate(agg);
-    expect(agg.metrics["child_counter"]!.samples[0]?.value).toBe(1);
+    expect(agg.metrics["child_counter"]!.samples[0]).toMatchObject({
+      name: "child_counter",
+      type: "counter",
+      value: 1,
+    });
   });
 
   test("Child registries inherit default labels from parent", () => {
@@ -161,7 +191,12 @@ describe("MetricRegistry children", () => {
     const agg = new BaseAggregator();
     parentRegistry.aggregate(agg);
     expect(agg.metrics["child_labeled_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "test", service: "api" } });
+      .toContainEqual(expect.objectContaining({
+        name: "child_labeled_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "test", service: "api" },
+      }));
   });
 
   test("Child registries can add to parent default labels", () => {
@@ -176,7 +211,12 @@ describe("MetricRegistry children", () => {
     const agg = new BaseAggregator();
     parentRegistry.aggregate(agg);
     expect(agg.metrics["child_labeled_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "test", service: "api" } });
+      .toContainEqual(expect.objectContaining({
+        name: "child_labeled_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "test", service: "api" },
+      }));
   });
 
   test("Child registries can override parent default labels", () => {
@@ -191,7 +231,12 @@ describe("MetricRegistry children", () => {
     const agg = new BaseAggregator();
     parentRegistry.aggregate(agg);
     expect(agg.metrics["child_labeled_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "prod" } });
+      .toContainEqual(expect.objectContaining({
+        name: "child_labeled_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "prod" },
+      }));
   });
 
   test("Child registries can be nested", () => {
@@ -209,7 +254,9 @@ describe("MetricRegistry children", () => {
     const agg = new BaseAggregator();
     grandParentRegistry.aggregate(agg);
     expect(agg.metrics["nested_labeled_counter"]!.samples)
-      .toContainEqual({
+      .toContainEqual(expect.objectContaining({
+        name: "nested_labeled_counter",
+        type: "counter",
         value: 1,
         labels: {
           env: "test",
@@ -217,7 +264,7 @@ describe("MetricRegistry children", () => {
           version: "v1",
           region: "us-east",
         },
-      });
+      }));
   });
 
   test("Children can be added manually", () => {
@@ -238,7 +285,12 @@ describe("MetricRegistry children", () => {
     parentRegistry.aggregate(agg);
 
     expect(agg.metrics["manually_added_child_counter"]!.samples)
-      .toContainEqual({ value: 1, labels: { env: "test", service: "api" } });
+      .toContainEqual(expect.objectContaining({
+        name: "manually_added_child_counter",
+        type: "counter",
+        value: 1,
+        labels: { env: "test", service: "api" },
+      }));
   });
 });
 
@@ -255,8 +307,16 @@ describe("MetricRegistry aggregation", () => {
     const agg = new BaseAggregator();
     registry.aggregate(agg);
 
-    expect(agg.metrics["test_counter"]!.samples[0]?.value).toBe(5);
-    expect(agg.metrics["test_gauge"]!.samples[0]?.value).toBe(10);
+    expect(agg.metrics["test_counter"]!.samples[0]).toMatchObject({
+      name: "test_counter",
+      type: "counter",
+      value: 5,
+    });
+    expect(agg.metrics["test_gauge"]!.samples[0]).toMatchObject({
+      name: "test_gauge",
+      type: "gauge",
+      value: 10,
+    });
 
     expect(registry.collect()).toBeString();
   });

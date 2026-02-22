@@ -37,7 +37,7 @@ function formatTimeseries(
 function formatLabels(labels: Record<string, string>): string {
   return Object.entries(labels)
     .map(([key, value]) => `${key}="${value}"`)
-    .join(", ");
+    .join(",");
 }
 
 function formatMetadata(name: string, type: string, description?: string) {

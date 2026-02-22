@@ -1,6 +1,6 @@
-import Scalar from "./scalar";
+import Gauge from "./gauge";
 
-export default class Observer extends Scalar {
+export default class Observer extends Gauge {
   public constructor(
     name: string,
     private readonly observeFn: () => number,
@@ -9,17 +9,7 @@ export default class Observer extends Scalar {
     super(name, labels);
   }
 
-  #metricType: "gauge" | "counter" = "gauge";
-  get metricType() {
-    return this.#metricType;
-  }
-
-  public ofType(type: "gauge" | "counter"): this {
-    this.#metricType = type;
-    return this;
-  }
-
-  get value(): number {
+  override get value(): number {
     return this.observeFn();
   }
 }

@@ -1,78 +1,124 @@
 import { defaultFormatter, type MetricFormatter } from "./format";
 import { mergeLabels } from "./util";
-import type { Labels, MetricType } from "./metric/metric";
+import type { Labels } from "./metric/metric";
+
+export type HistogramSample = {
+  name: string;
+  type: "histogram";
+  description?: string;
+  labels?: Labels;
+  buckets: {
+    le: string;
+    count: number;
+  }[];
+  count: number;
+  sum: number;
+};
+
+export type CounterSample = {
+  name: string;
+  type: "counter";
+  description?: string;
+  labels?: Labels;
+  value: number;
+};
+
+export type GaugeSample = {
+  name: string;
+  type: "gauge";
+  description?: string;
+  labels?: Labels;
+  value: number;
+};
+
+export type MetricSample = HistogramSample | CounterSample | GaugeSample;
+
+export interface Aggregator {
+  observe(sample: MetricSample): void;
+  format(formatter: MetricFormatter): string;
+  toString(): string;
+}
 
 export type AggregateSample = {
   value: number;
   labels?: Record<string, string>;
 };
 
-type AggregateEntry = {
-  type: MetricType;
+export type MetricFamily<T extends MetricSample = MetricSample> = {
+  name: string;
+  type: T["type"];
   description?: string;
-  samples: AggregateSample[];
+  samples: T[];
 };
 
-export interface Aggregator {
-  addMeta(name: string, type: MetricType, description?: string): void;
-  addSample(name: string, value: number, labels?: Labels): void;
-  observe(
-    name: string,
-    type: MetricType,
-    description: string | undefined,
-    samples: AggregateSample[],
-  ): void;
-  format(formatter: MetricFormatter): string;
-  toString(): string;
-}
-
 export class BaseAggregator implements Aggregator {
-  public readonly metrics: Record<string, AggregateEntry> = {};
+  public readonly metrics: Record<string, MetricFamily> = {};
 
   constructor() {}
 
-  observe(
-    name: string,
-    type: MetricType,
-    description: string | undefined,
-    samples: AggregateSample[],
-  ) {
-    this.addMeta(name, type, description);
-    for (const sample of samples) {
-      this.addSample(name, sample.value, sample.labels);
+  observe(sample: MetricSample) {
+    const family = this.metrics[sample.name];
+    if (family) {
+      family.samples.push(sample);
+    } else {
+      this.metrics[sample.name] = {
+        name: sample.name,
+        type: sample.type,
+        description: sample.description,
+        samples: [sample],
+      };
     }
   }
 
-  addMeta(name: string, type: MetricType, description?: string) {
-    if (!this.metrics[name]) {
-      this.metrics[name] = { type, description, samples: [] };
-    } else {
-      this.metrics[name].type = type;
-      this.metrics[name].description = description;
+  private formatHistogramSample(
+    formatter: MetricFormatter,
+    sample: HistogramSample,
+  ): string {
+    let result = "";
+    const bucketName = `${sample.name}_bucket`;
+
+    for (const { le, count } of sample.buckets) {
+      result += formatter.timeseries(
+        bucketName,
+        count,
+        { ...sample.labels, le },
+      );
     }
+
+    result += formatter.timeseries(
+      `${sample.name}_count`,
+      sample.count,
+      sample.labels,
+    );
+    result += formatter.timeseries(
+      `${sample.name}_sum`,
+      sample.sum,
+      sample.labels,
+    );
+
+    return result;
   }
 
-  addSample(name: string, value: number, labels?: Record<string, string>) {
-    if (!this.metrics[name]) {
-      // Default to gauge type if meta is not defined
-      this.metrics[name] = { type: "gauge", samples: [{ value, labels }] };
-    } else {
-      this.metrics[name].samples.push({ value, labels });
-    }
+  private formatScalarSample(
+    formatter: MetricFormatter,
+    sample: CounterSample | GaugeSample,
+  ): string {
+    return formatter.timeseries(sample.name, sample.value, sample.labels);
   }
 
   format(formatter: MetricFormatter): string {
     let result = "";
-    for (const [name, entry] of Object.entries(this.metrics)) {
-      if (entry.samples.length === 0) continue;
 
-      result += formatter.metadata(name, entry.type, entry.description);
+    for (const [name, family] of Object.entries(this.metrics)) {
+      result += formatter.metadata(name, family.type, family.description);
 
-      for (const sample of entry.samples) {
-        result += formatter.timeseries(name, sample.value, sample.labels);
+      for (const sample of family.samples) {
+        if (sample.type === "histogram") {
+          result += this.formatHistogramSample(formatter, sample);
+        } else {
+          result += this.formatScalarSample(formatter, sample);
+        }
       }
-
-      result += "\n";
     }
 
     return result;
@@ -89,33 +135,18 @@ export class LabelingAggregator implements Aggregator {
     readonly defaultLabels: Labels = {},
   ) {}
 
-  addMeta(name: string, type: MetricType, description?: string) {
-    this.baseAggregator.addMeta(name, type, description);
-  }
-
-  addSample(name: string, value: number, labels?: Labels) {
-    this.baseAggregator.addSample(
-      name,
-      value,
-      mergeLabels(this.defaultLabels, labels),
-    );
-  }
-
-  observe(
-    name: string,
-    type: MetricType,
-    description: string | undefined,
-    samples: AggregateSample[],
-  ) {
-    const mergedSamples = samples.map((sample) => ({
-      value: sample.value,
+  observe(sample: MetricSample) {
+    this.baseAggregator.observe({
+      ...sample,
       labels: mergeLabels(this.defaultLabels, sample.labels),
-    }));
-
-    this.baseAggregator.observe(name, type, description, mergedSamples);
+    });
   }
 
   format(formatter: MetricFormatter): string {
     return this.baseAggregator.format(formatter);
+  }
+
+  toString(): string {
+    return this.baseAggregator.toString();
   }
 }
