@@ -3,17 +3,26 @@ import jsc from "bun:jsc";
 import type { Aggregator } from "../../aggregator";
 import type Collector from "../../collector";
 
+type EnabledMetrics = {
+  uptime: boolean,
+  memory: boolean,
+  cpu: boolean,
+  heap: boolean,
+}
+
 export class SystemMetricsCollector implements Collector {
+  constructor(private enabled: EnabledMetrics) { }
+
   aggregate<T extends Aggregator>(agg: T) {
     this.observeAll(agg);
     return agg;
   }
 
   private observeAll(agg: Aggregator) {
-    this.observeUptime(agg);
-    this.observeMemory(agg);
-    this.observeHeap(agg);
-    this.observeCpu(agg);
+    if (this.enabled.uptime) this.observeUptime(agg);
+    if (this.enabled.memory) this.observeMemory(agg);
+    if (this.enabled.cpu) this.observeCpu(agg);
+    if (this.enabled.heap) this.observeHeap(agg);
   }
 
   private observeMemory(agg: Aggregator) {
