@@ -4,7 +4,7 @@ import Metric from "./metric";
 export default class Histogram extends Metric {
   static defaultBuckets = [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10];
 
-  private bucketsLe: number[] = Histogram.defaultBuckets;
+  private bucketsLe: readonly number[] = Histogram.defaultBuckets;
   private bucketCounts: number[] = new Array(this.bucketsLe.length + 1).fill(0);
 
   private count = 0;
@@ -27,9 +27,7 @@ export default class Histogram extends Metric {
     width: number,
     count: number,
   ): Histogram {
-    this.bucketsLe = Histogram.linearBuckets(start, width, count);
-    this.bucketCounts = new Array(this.bucketsLe.length + 1).fill(0);
-    return this;
+    return this.withBuckets(Histogram.linearBuckets(start, width, count))
   }
 
   public withExponentialBuckets(
@@ -37,12 +35,20 @@ export default class Histogram extends Metric {
     factor: number,
     count: number,
   ): Histogram {
-    this.bucketsLe = Histogram.exponentialBuckets(start, factor, count);
-    this.bucketCounts = new Array(this.bucketsLe.length + 1).fill(0);
+    return this.withBuckets(Histogram.exponentialBuckets(start, factor, count))
+  }
+
+  private withBuckets(buckets: readonly number[]): Histogram {
+    this.bucketsLe = buckets;
+
+    if (this.bucketCounts.length !== buckets.length + 1) {
+      this.bucketCounts = new Array(buckets.length + 1).fill(0);
+    }
+
     return this;
   }
 
-  static linearBuckets(start: number, width: number, count: number): number[] {
+  static linearBuckets(start: number, width: number, count: number): readonly number[] {
     if (count < 1) {
       throw new Error("Count must be at least 1");
     }
@@ -58,7 +64,7 @@ export default class Histogram extends Metric {
     start: number,
     factor: number,
     count: number,
-  ): number[] {
+  ): readonly number[] {
     if (count < 1) {
       throw new Error("Count must be positive");
     }
